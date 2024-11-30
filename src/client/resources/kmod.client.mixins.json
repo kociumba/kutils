@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "org.kociumba.kmod.mixin.client",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ClientWorldMixin",
+    "ClientWorldPropertiesMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

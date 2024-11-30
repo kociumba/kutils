@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "id": "kmod",
+  "version": "${version}",
+  "name": "Kmod",
+  "description": "Collection of my personal utils and tweaks 😎",
+  "authors": ["kociumba"],
+  "contact": {
+    "sources": "https://github.com/kociumba/kmod",
+    "homepage": "https://github.com/kociumba/kmod",
+    "issues": "https://github.com/kociumba/kmod/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/kmod/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "org.kociumba.kmod.client.KmodClient"
+    ],
+    "main": [
+      "org.kociumba.kmod.Kmod"
+    ]
+  },
+  "mixins": [
+    "kmod.mixins.json",
+    {
+      "config": "kmod.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric-language-kotlin": ">=${kotlin_loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
