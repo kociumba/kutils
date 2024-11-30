@@ -4,8 +4,10 @@
   "package": "org.kociumba.kmod.mixin.client",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "ClientPlayerEntityMixin",
     "ClientWorldMixin",
-    "ClientWorldPropertiesMixin"
+    "ClientWorldPropertiesMixin",
+    "OverlayTextureMixin"
   ],
   "injectors": {
     "defaultRequire": 1

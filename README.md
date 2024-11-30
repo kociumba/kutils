@@ -16,12 +16,12 @@ and does not require Essential to be installed.
 ## Features
 
 Implemented features:
- - custom damage tint (opacity 0 turns off tint)
-    > [!NOTE]
-   >  this is implemented using core shaders instead of a mixins
-   >  couse I'm stupid and could figure it out myself, so you need to reload resources to
-   >  apply changes. I'm fully intending to migrate this to mixins when I figure out how.
- - time changer (freeze time on a specific tick amount)
+ - custom damage tint
+ - disable damage tint (by setting the opacity to 0)
+> stopped being stupid and wrote a proper mixin for this 😎
+> no more core shaders and resource reloading
+ - time changer (freeze time client side on a specific tick amount)
+ - always sprint toggle (does not reset on death)
 
 ## FAQ
 
@@ -33,6 +33,5 @@ skyblock's upcoming foraging update.
 
 #### Q: why is there no X feature?
 A: first of all suggest it in [issues](https://github.com/kociumba/kmod/issues),
-but aside from that the only reason I'm at all attempting to write a minecraft mod
-is kotlin compatibility, as I despise java itself and if it was the only choice,
-this mod would never exist (yes mixins are still in java but mixins almost feel like a dsl).
+but aside from that I'm just not really a java or kotlin dev, so maby I don't know how to do it,
+or I just didn't think of it.

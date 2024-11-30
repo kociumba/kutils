@@ -4,11 +4,11 @@ import net.fabricmc.api.ModInitializer
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
-val log: Logger = LogManager.getLogger("kociumba/kmod")
+val log: Logger = LogManager.getLogger("kmod")
 
 class Kmod : ModInitializer {
 
     override fun onInitialize() {
-        log.info("initializing kmod")
+        log.info("initializing kmod...")
     }
 }
