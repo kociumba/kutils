@@ -1,30 +1,34 @@
 {
   "schemaVersion": 1,
-  "id": "kmod",
+  "id": "kutils",
   "version": "${version}",
-  "name": "Kmod",
+  "name": "kutils",
   "description": "Collection of my personal utils and tweaks 😎",
   "authors": ["kociumba"],
   "contact": {
-    "sources": "https://github.com/kociumba/kmod",
-    "homepage": "https://github.com/kociumba/kmod",
-    "issues": "https://github.com/kociumba/kmod/issues"
+    "sources": "https://github.com/kociumba/kutils",
+    "homepage": "https://github.com/kociumba/kutils",
+    "issues": "https://github.com/kociumba/kutils/issues"
   },
   "license": "MIT",
-  "icon": "assets/kmod/icon.png",
+  "icon": "assets/kutils/icon.png",
   "environment": "client",
+  "suggests": {
+    "essential": "1.21+",
+    "Too Many Shortcuts": "1.21+"
+  },
   "entrypoints": {
     "client": [
-      "org.kociumba.kmod.client.KmodClient"
+      "org.kociumba.kutils.client.KutilsClient"
     ],
     "main": [
-      "org.kociumba.kmod.Kmod"
+      "org.kociumba.kutils.Kutils"
     ]
   },
   "mixins": [
-    "kmod.mixins.json",
+    "kutils.mixins.json",
     {
-      "config": "kmod.client.mixins.json",
+      "config": "kutils.client.mixins.json",
       "environment": "client"
     }
   ],

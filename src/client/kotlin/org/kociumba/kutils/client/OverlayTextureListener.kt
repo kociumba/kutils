@@ -1,4 +1,4 @@
-package org.kociumba.kmod.client
+package org.kociumba.kutils.client
 
 import java.awt.Color
 

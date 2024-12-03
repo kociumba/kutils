@@ -1,4 +1,4 @@
-package org.kociumba.kmod.client
+package org.kociumba.kutils.client
 
 import gg.essential.universal.UMinecraft
 import gg.essential.vigilance.Vigilant
@@ -7,7 +7,17 @@ import gg.essential.vigilance.data.PropertyType
 import java.awt.Color
 import java.io.File
 
-class ConfigGUI : Vigilant(File("./config/kmod.toml")) {
+enum class DamageTintPresets(val color: Color) {
+    PissYellow(Color(255, 242, 78)),
+    ShitBrown(Color(82, 50, 15)),
+    TittyMilk(Color(242, 223, 228)),
+    PussyPink(Color(227, 153, 143)),
+    WeedGreen(Color(1, 94, 7)),
+    MethBlue(Color(140, 200, 222)),
+}
+
+
+class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     @Property(
         type = PropertyType.SWITCH,
         name = "custom damage tint",
@@ -28,6 +38,16 @@ class ConfigGUI : Vigilant(File("./config/kmod.toml")) {
     var damageTintColor: Color = Color(255, 0, 0, 77)
     // the default is close to the minecraft default look, since the core shader method is bad,
     // and it can not be disabled easily, one more reason to migrate this to a mixin
+
+    @Property(
+        type = PropertyType.SELECTOR,
+        name = "damage tint presets",
+        description = "change the color of the damage tint",
+        category = "rendering",
+        subcategory = "entity",
+        options = ["PissYellow", "ShitBrown", "TittyMilk", "PussyPink", "WeedGreen", "MethBlue"]
+    )
+    var damageTintPresets: Int = DamageTintPresets.PissYellow.ordinal
 
     @Property(
         type = PropertyType.BUTTON,
@@ -73,6 +93,16 @@ class ConfigGUI : Vigilant(File("./config/kmod.toml")) {
     )
     var shouldAlwaysSprint: Boolean = false
 
+    @Property(
+        type = PropertyType.TEXT,
+        name = "custom window title",
+        description = "change the window title",
+        category = "misc",
+        subcategory = "window",
+        hidden = true
+    )
+    var customWindowTitle: String = ""
+
     init {
         initialize()
 
@@ -88,6 +118,17 @@ class ConfigGUI : Vigilant(File("./config/kmod.toml")) {
                 OverlayTextureListener.notifyColorChanged(Color(255, 0, 0, 77)) // more or less default
             }
         }
+
+        registerListener(clazz.getDeclaredField("damageTintPresets")) { value: Int ->
+            OverlayTextureListener.notifyColorChanged(DamageTintPresets.entries[value].color)
+        }
+
+//        registerListener(clazz.getDeclaredField("customWindowTitle")) { value: String ->
+//            if (value.isNotEmpty()) {
+////                UMinecraft.getMinecraft().window.setTitle(value)
+//                mainWindow.setTitle(value)
+//            }
+//        }
 
         addDependency(clazz.getDeclaredField("damageTintColor"), clazz.getDeclaredField("shouldTintDamage"))
         addDependency(clazz.getDeclaredField("userTime"), clazz.getDeclaredField("shouldChangeTime"))

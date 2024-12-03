@@ -1,11 +1,10 @@
-package org.kociumba.kmod.mixin.client;
+package org.kociumba.kutils.mixin.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
-import org.kociumba.kmod.client.OverlayTextureListener;
-import org.spongepowered.asm.mixin.Final;
+import org.kociumba.kutils.client.OverlayTextureListener;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -15,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.awt.Color;
 import net.minecraft.util.math.ColorHelper;
 
-import static org.kociumba.kmod.client.KmodClientKt.getC;
+import static org.kociumba.kutils.client.KutilsClientKt.getC;
 
 /**
  * Mixin for {@link OverlayTexture} to add custom tinting to the overlay texture.
@@ -25,7 +24,6 @@ import static org.kociumba.kmod.client.KmodClientKt.getC;
 @Mixin(OverlayTexture.class)
 public abstract class OverlayTextureMixin implements OverlayTextureListener {
 
-    @Final
     @Shadow
     private NativeImageBackedTexture texture = new NativeImageBackedTexture(16, 16, false);
 

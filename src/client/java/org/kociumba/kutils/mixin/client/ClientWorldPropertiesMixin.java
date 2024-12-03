@@ -1,4 +1,4 @@
-package org.kociumba.kmod.mixin.client;
+package org.kociumba.kutils.mixin.client;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import static org.kociumba.kmod.client.KmodClientKt.getC;
+import static org.kociumba.kutils.client.KutilsClientKt.getC;
 
 @Mixin(ClientWorld.Properties.class)
 public abstract class ClientWorldPropertiesMixin {

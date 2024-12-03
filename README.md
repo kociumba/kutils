@@ -1,17 +1,9 @@
-# Kmod
+# kutils
 
 A simple (probably buggy) collection of qol features
 and tweaks that I am used to from 1.8.9 but for 1.21+
 
-This mod is fully client side and will never feature server side features.
-This is because it is intended for use on servers like hypixel just like 
-the old 1.8.9 mods.
-
-## Overview
-
-Kmod uses [Vigilance](https://github.com/EssentialGG/Vigilance) by the Essential team for its config.
-While I know some people do not like Essential, this library is separate from the ecosystem,
-and does not require Essential to be installed.
+This mod is fully client sided and tries to stay within the bounds of hypixel mod legality.
 
 ## Features
 
@@ -23,6 +15,9 @@ Implemented features:
  - time changer (freeze time client side on a specific tick amount)
  - always sprint toggle (does not reset on death)
 
+WIP features:
+ - in game calculator with simple controls
+
 ## FAQ
 
 #### Q: why 1.21+ instead of 1.8.9?
@@ -32,6 +27,6 @@ some gamemodes only accessible on 1.21+, and the same was said to be the case fo
 skyblock's upcoming foraging update.
 
 #### Q: why is there no X feature?
-A: first of all suggest it in [issues](https://github.com/kociumba/kmod/issues),
+A: first of all suggest it in [issues](https://github.com/kociumba/kutils/issues),
 but aside from that I'm just not really a java or kotlin dev, so maby I don't know how to do it,
 or I just didn't think of it.

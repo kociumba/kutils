@@ -28,7 +28,7 @@ loom {
     splitEnvironmentSourceSets()
 
     mods {
-        register("kmod") {
+        register("kutils") {
             sourceSet("main")
             sourceSet("client")
         }
@@ -43,6 +43,7 @@ repositories {
     // for more information about repositories.
 
     maven(url = "https://repo.essential.gg/repository/maven-public")
+    maven(url = "https://maven.wispforest.io")
 }
 
 dependencies {
@@ -55,7 +56,11 @@ dependencies {
     modImplementation("net.fabricmc.fabric-api:fabric-api:${project.property("fabric_version")}")
 
     implementation(include("gg.essential:vigilance:${project.property("vigilance_version")}")!!)
+    implementation(include("gg.essential:elementa:${project.property("elementa_version")}")!!)
     modImplementation(include("gg.essential:universalcraft-1.21-fabric:365")!!)
+
+//    modImplementation("io.wispforest:owo-lib:${project.property("owo_version")}")
+//    include("io.wispforest:owo-sentinel:${project.property("owo_version")}")
 }
 
 tasks.processResources {

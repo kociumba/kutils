@@ -1,4 +1,4 @@
-package org.kociumba.kmod.mixin.client;
+package org.kociumba.kutils.mixin.client;
 
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.MinecraftClient;
@@ -11,9 +11,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import static org.kociumba.kmod.client.KmodClientKt.getC;
+import static org.kociumba.kutils.client.KutilsClientKt.getC;
 
 @Mixin(ClientPlayerEntity.class)
 public abstract class ClientPlayerEntityMixin extends AbstractClientPlayerEntity {

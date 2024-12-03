@@ -1,4 +1,4 @@
-package org.kociumba.kmod.mixin.client;
+package org.kociumba.kutils.mixin.client;
 
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.registry.DynamicRegistryManager;
@@ -12,7 +12,7 @@ import net.minecraft.world.dimension.DimensionType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
-import static org.kociumba.kmod.client.KmodClientKt.getC;
+import static org.kociumba.kutils.client.KutilsClientKt.getC;
 
 @Mixin(ClientWorld.class)
 public abstract class ClientWorldMixin extends World {
