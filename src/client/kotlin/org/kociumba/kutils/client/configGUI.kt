@@ -7,6 +7,11 @@ import gg.essential.vigilance.data.PropertyType
 import java.awt.Color
 import java.io.File
 
+/**
+ * The best color presets I could think of
+ *
+ * They are in fact so good I'm not going to enable them in the public build 💀
+ */
 enum class DamageTintPresets(val color: Color) {
     PissYellow(Color(255, 242, 78)),
     ShitBrown(Color(82, 50, 15)),
@@ -45,7 +50,8 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         description = "change the color of the damage tint",
         category = "rendering",
         subcategory = "entity",
-        options = ["PissYellow", "ShitBrown", "TittyMilk", "PussyPink", "WeedGreen", "MethBlue"]
+        options = ["PissYellow", "ShitBrown", "TittyMilk", "PussyPink", "WeedGreen", "MethBlue"],
+        hidden = true
     )
     var damageTintPresets: Int = DamageTintPresets.PissYellow.ordinal
 
@@ -121,6 +127,7 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
 
         registerListener(clazz.getDeclaredField("damageTintPresets")) { value: Int ->
             OverlayTextureListener.notifyColorChanged(DamageTintPresets.entries[value].color)
+            damageTintColor = DamageTintPresets.entries[value].color
         }
 
 //        registerListener(clazz.getDeclaredField("customWindowTitle")) { value: String ->
