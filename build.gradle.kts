@@ -6,6 +6,7 @@ plugins {
 //    id("fabric-loom") version "1.7.1"
     id("fabric-loom") version "1.8.9"
     id("maven-publish")
+    kotlin("plugin.serialization") version "1.8.10"
 }
 
 version = project.property("mod_version") as String
@@ -44,6 +45,7 @@ repositories {
 
     maven(url = "https://repo.essential.gg/repository/maven-public")
     maven(url = "https://maven.wispforest.io")
+    maven(url = "https://repo.alignedcookie88.com/repository/maven-public/")
 }
 
 dependencies {
@@ -59,8 +61,15 @@ dependencies {
     implementation(include("gg.essential:elementa:${project.property("elementa_version")}")!!)
     modImplementation(include("gg.essential:universalcraft-1.21-fabric:365")!!)
 
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+
 //    modImplementation("io.wispforest:owo-lib:${project.property("owo_version")}")
 //    include("io.wispforest:owo-sentinel:${project.property("owo_version")}")
+
+    // would be cool to be able to include it in jar couse of fucked up versioning
+    // if not we have to declare dependency on version down like this: "imguimc": "1.21.1-1.0.7"
+    //  which sucks couse the new one has debug tools
+    modImplementation(include("xyz.breadloaf.imguimc:imgui-mc:${project.property("imguimc_version")}")!!)
 }
 
 tasks.processResources {

@@ -18,6 +18,7 @@ import org.kociumba.kutils.log
 import java.math.BigDecimal
 import java.math.RoundingMode
 
+// migrate this to imgui now that we have it working
 class CalcScreen : WindowScreen(ElementaVersion.V2) {
     private val textInput: UIComponent
     private val resultText: UIComponent
