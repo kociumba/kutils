@@ -2,6 +2,8 @@ package org.kociumba.kutils.client.bazaar
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import net.fabricmc.api.EnvType
+import net.fabricmc.api.Environment
 import org.kociumba.kutils.client.httpClient.Http
 
 @Serializable
@@ -49,6 +51,7 @@ data class QuickStatus(
 /**
  * utility to easily get hypixel data
  */
+@Environment(EnvType.CLIENT)
 object BazaarAPI {
     fun getBazaar(): Bazaar {
         var r = Http.getProxy("https://kutils-hypixel-proxy.kociumba.workers.dev/bazaar")

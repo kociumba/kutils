@@ -4,6 +4,7 @@
   "package": "org.kociumba.kutils.mixin.client",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "BlockBreakParticleMixin",
     "ClientPlayerEntityMixin",
     "ClientWorldMixin",
     "ClientWorldPropertiesMixin",

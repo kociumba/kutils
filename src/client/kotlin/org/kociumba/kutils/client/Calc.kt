@@ -13,12 +13,34 @@ import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.state.BasicState
 import gg.essential.universal.UDesktop
+import gg.essential.universal.UMinecraft
+import imgui.ImGui
+import imgui.flag.ImGuiCond
+import imgui.flag.ImGuiInputTextFlags
+import imgui.flag.ImGuiKey
+import imgui.flag.ImGuiWindowFlags
+import imgui.type.ImString
+import net.minecraft.client.MinecraftClient
+import net.minecraft.client.input.KeyCodes
+import org.kociumba.kutils.client.imgui.ImGuiKutilsTheme
+import org.kociumba.kutils.client.imgui.ImGuiKutilsTransparentTheme
 import java.awt.Color
 import org.kociumba.kutils.log
+import xyz.breadloaf.imguimc.Imguimc
+import xyz.breadloaf.imguimc.interfaces.Renderable
+import xyz.breadloaf.imguimc.interfaces.Theme
 import java.math.BigDecimal
 import java.math.RoundingMode
 
 // migrate this to imgui now that we have it working
+/**
+ * Old elementa calculator ui
+ */
+@Deprecated(
+    message = "Migrate to imgui ui",
+    level = DeprecationLevel.ERROR,
+    replaceWith = ReplaceWith("ImCalcUI")
+)
 class CalcScreen : WindowScreen(ElementaVersion.V2) {
     private val textInput: UIComponent
     private val resultText: UIComponent
@@ -57,7 +79,7 @@ class CalcScreen : WindowScreen(ElementaVersion.V2) {
         textInput.grabWindowFocus()
 
         textInput.onMouseClick { textInput.grabWindowFocus() }
-        
+
         textInput.onKeyType { typedChar, keyCode ->
             log.info("typedChar: $typedChar, keyCode: $keyCode")
             input = textInput.getText()
@@ -65,8 +87,8 @@ class CalcScreen : WindowScreen(ElementaVersion.V2) {
 
             if (keyCode == 257) { // why is this enter in minecraft ???
                 calculateAndCopy()
-                calculatorState.calcScreen?.calculateAndCopy()
-                displayScreen(calculatorState.prevScreen)
+//                calculatorState.calcScreen?.calculateAndCopy()
+//                displayScreen(calculatorState.prevScreen)
             }
         }
     }
@@ -85,6 +107,95 @@ class CalcScreen : WindowScreen(ElementaVersion.V2) {
     fun calculateAndCopy() {
         calculate()
         UDesktop.setClipboardString(outputBuffer.get())
+    }
+}
+
+/**
+ * New ImGui calculator ui (WIP)
+ */
+object ImCalcUI : Renderable {
+    private var inputBuffer = ImString("", 256)
+    private var outputBuffer = ImString("", 256)
+    private var enterPressed = false
+    private var window = MinecraftClient.getInstance().window
+
+    override fun getName(): String? {
+        return "calculator ui"
+    }
+
+    override fun getTheme(): Theme? {
+        return ImGuiKutilsTransparentTheme()
+    }
+
+    /**
+     * TODO: Need some way of forcing mouse and keyboard focus on this
+     * > Turns out I don't need a mixin for this, but the input focus is very aggressive, so maby add a setting to disable it ?
+     */
+    override fun render() {
+        ImGui.setNextWindowPos(window.width / 2f - 150f, window.height / 2f - 100f)
+        ImGui.setNextWindowSize(300f, 200f)
+
+        ImGui.begin("Calculator", ImGuiWindowFlags.NoDecoration or
+                ImGuiWindowFlags.NoDocking or
+                ImGuiWindowFlags.NoTitleBar or
+                ImGuiWindowFlags.NoResize or
+                ImGuiWindowFlags.NoBackground or
+                ImGuiWindowFlags.NoNav
+        )
+        ImGui.setWindowFocus("Calculator")
+
+        ImGui.text("Input:")
+        ImGui.sameLine()
+
+        ImGui.setKeyboardFocusHere()
+        if (ImGui.inputText("##input", inputBuffer)) {
+            try {
+                val tokens = Calculator.lex(inputBuffer.get())
+                val rpnTokens = Calculator.shuntingYard(tokens)
+                val result = Calculator.evaluate(rpnTokens)
+                outputBuffer.set(result.toPlainString())
+            } catch (e: CalculatorException) {
+                log.warn("Error: ${e.message} at offset ${e.offset}, length ${e.length}, input: ${inputBuffer.get()}, result: ${outputBuffer.get()}")
+            }
+        }
+
+        /**
+         * can now replace with ImGui.isKeyPressed(McKeyMap.ENTER.value())
+         */
+        if (ImGui.isKeyPressed(257)) { // once again why is this enter in minecraft ???
+            enterPressed = true
+        }
+
+        /**
+         * can now replace with ImGui.isKeyPressed(McKeyMap.ESCAPE.value())
+         */
+        if (ImGui.isKeyPressed(256)) { // WHY THE FUCK IS THIS ESCAPE, I'M ACTUALLY GONNA PUNCH A HOLE IN MY WALL
+            displayingCalc = false
+            Imguimc.pullRenderableAfterRender(this)
+            enterPressed = false
+        }
+
+        ImGui.text("Result:")
+        ImGui.sameLine()
+        ImGui.text(outputBuffer.get())
+
+        if (enterPressed) {
+            UDesktop.setClipboardString(outputBuffer.get())
+//                UMinecraft.getMinecraft().setScreen(null)
+            displayingCalc = false
+            Imguimc.pullRenderableAfterRender(this) // will this work xd ??? It does 😎
+            enterPressed = false
+        }
+
+        if (ImGui.button("Copy Result")) {
+            UDesktop.setClipboardString(outputBuffer.get())
+        }
+
+        ImGui.end()
+    }
+
+    fun reset() {
+        enterPressed = false
     }
 }
 
@@ -149,26 +260,31 @@ object Calculator {
                     token.type = TokenType.BINOP
                     token.operatorValue = c.toString()
                 }
+
                 postops.contains(c) -> {
                     token.tokenLength = 1
                     token.type = TokenType.POSTOP
                     token.operatorValue = c.toString()
                 }
+
                 c == ')' -> {
                     token.tokenLength = 1
                     token.type = TokenType.RPAREN
                     token.operatorValue = ")"
                 }
+
                 c == '(' -> {
                     token.tokenLength = 1
                     token.type = TokenType.LPAREN
                     token.operatorValue = "("
                 }
+
                 c == '.' -> {
                     token.tokenLength = 1
                     readDigitsInto(token, source, true)
                     if (token.tokenLength == 1) throw CalculatorException("Invalid number literal", i, 1)
                 }
+
                 digits.contains(c) -> {
                     readDigitsInto(token, source, false)
                     if (i + token.tokenLength < source.length && source[i + token.tokenLength] == '.') {
@@ -176,6 +292,7 @@ object Calculator {
                         readDigitsInto(token, source, true)
                     }
                 }
+
                 else -> throw CalculatorException("Unknown thing $c", i, 1)
             }
             tokens.add(token)
@@ -188,7 +305,11 @@ object Calculator {
         return when (token.operatorValue) {
             "+", "-" -> 0
             "*", "/", "x" -> 1
-            else -> throw CalculatorException("Unknown operator ${token.operatorValue}", token.tokenStart, token.tokenLength)
+            else -> throw CalculatorException(
+                "Unknown operator ${token.operatorValue}",
+                token.tokenStart,
+                token.tokenLength
+            )
         }
     }
 
@@ -214,22 +335,32 @@ object Calculator {
                     }
                     op.addFirst(token)
                 }
+
                 TokenType.LPAREN -> op.addFirst(token)
                 TokenType.RPAREN -> {
                     while (true) {
-                        if (op.isEmpty()) throw CalculatorException("Unbalanced right parenthesis", token.tokenStart, token.tokenLength)
+                        if (op.isEmpty()) throw CalculatorException(
+                            "Unbalanced right parenthesis",
+                            token.tokenStart,
+                            token.tokenLength
+                        )
                         val l = op.removeFirst()
                         if (l.type == TokenType.LPAREN) break
                         out.add(l)
                     }
                 }
+
                 TokenType.POSTOP -> out.add(token)
             }
         }
 
         while (op.isNotEmpty()) {
             val l = op.removeFirst()
-            if (l.type == TokenType.LPAREN) throw CalculatorException("Unbalanced left parenthesis", l.tokenStart, l.tokenLength)
+            if (l.type == TokenType.LPAREN) throw CalculatorException(
+                "Unbalanced left parenthesis",
+                l.tokenStart,
+                l.tokenLength
+            )
             out.add(l)
         }
 
@@ -251,10 +382,15 @@ object Calculator {
                             "/" -> left.divide(right, RoundingMode.HALF_UP)
                             "+" -> left.add(right)
                             "-" -> left.subtract(right)
-                            else -> throw CalculatorException("Unknown operation ${token.operatorValue}", token.tokenStart, token.tokenLength)
+                            else -> throw CalculatorException(
+                                "Unknown operation ${token.operatorValue}",
+                                token.tokenStart,
+                                token.tokenLength
+                            )
                         }
                         values.addFirst(result.setScale(2, RoundingMode.HALF_UP))
                     }
+
                     TokenType.POSTOP -> {
                         val value = values.removeFirst()
                         val result = when (token.operatorValue) {
@@ -263,11 +399,20 @@ object Calculator {
                             "m" -> value.multiply(BigDecimal(1_000_000))
                             "b" -> value.multiply(BigDecimal(1_000_000_000))
                             "t" -> value.multiply(BigDecimal("1000000000000"))
-                            else -> throw CalculatorException("Unknown operation ${token.operatorValue}", token.tokenStart, token.tokenLength)
+                            else -> throw CalculatorException(
+                                "Unknown operation ${token.operatorValue}",
+                                token.tokenStart,
+                                token.tokenLength
+                            )
                         }
                         values.addFirst(result.setScale(2, RoundingMode.HALF_UP))
                     }
-                    else -> throw CalculatorException("Did not expect unshunted token in RPN", token.tokenStart, token.tokenLength)
+
+                    else -> throw CalculatorException(
+                        "Did not expect unshunted token in RPN",
+                        token.tokenStart,
+                        token.tokenLength
+                    )
                 }
             }
             return values.removeFirst().stripTrailingZeros()

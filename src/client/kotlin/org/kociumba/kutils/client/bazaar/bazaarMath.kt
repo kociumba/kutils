@@ -1,11 +1,14 @@
 package org.kociumba.kutils.client.bazaar
 
+import net.fabricmc.api.EnvType
+import net.fabricmc.api.Environment
 import org.kociumba.kutils.log
 import kotlin.math.sign
 
 /**
   * more or less a direct port of [Skydriver](https://www.github.com/kociumba/skydriver) math
   */
+@Environment(EnvType.CLIENT)
 object BazaarMath {
     private val w1 = 0.1428571429 // Weight for Price Spread
     private val w2 = 0.1428571429 // Weight for Volume Imbalance

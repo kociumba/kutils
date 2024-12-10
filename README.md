@@ -17,14 +17,19 @@ bindings to 1.21+
 Implemented features:
 - custom damage tint
 - disable damage tint (by setting the opacity to 0)
-> stopped being stupid and wrote a proper mixin for this 😎
-> no more core shaders and resource reloading
 - time changer (freeze time client side on a specific tick amount)
 - always sprint toggle (does not reset on death)
+- cpu and ram usage statistics HUD
+
+Basically done features 🤷:
+- in game calculator with simple controls
 
 WIP features:
-- in game calculator with simple controls (in progress of migrating to an imgui based ui)
 - in game implementation of [Skydriver](https://www.github.com/kociumba/Skydriver) (my cli bazaar data app)
+- block breaking particles remover
+
+Planned features:
+- more HUDs to display various info
 
 ## FAQ
 

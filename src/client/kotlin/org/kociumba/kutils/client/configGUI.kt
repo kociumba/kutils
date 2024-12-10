@@ -4,6 +4,12 @@ import gg.essential.universal.UMinecraft
 import gg.essential.vigilance.Vigilant
 import gg.essential.vigilance.data.Property
 import gg.essential.vigilance.data.PropertyType
+import imgui.ImGui
+import net.fabricmc.api.EnvType
+import net.fabricmc.api.Environment
+import org.kociumba.kutils.client.hud.hud
+import org.kociumba.kutils.client.hud.performanceHud
+import xyz.breadloaf.imguimc.Imguimc
 import java.awt.Color
 import java.io.File
 
@@ -21,7 +27,7 @@ enum class DamageTintPresets(val color: Color) {
     MethBlue(Color(140, 200, 222)),
 }
 
-
+@Environment(EnvType.CLIENT)
 class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     @Property(
         type = PropertyType.SWITCH,
@@ -99,6 +105,9 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     )
     var shouldAlwaysSprint: Boolean = false
 
+    /**
+     * Still need to get to figuring this out
+     */
     @Property(
         type = PropertyType.TEXT,
         name = "custom window title",
@@ -108,6 +117,35 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         hidden = true
     )
     var customWindowTitle: String = ""
+
+    @Property(
+        type = PropertyType.SWITCH,
+        name = "hud",
+        description = "",
+        category = "rendering",
+        subcategory = "utils",
+        hidden = true
+    )
+    var displayHud: Boolean = true
+
+    @Property(
+        type = PropertyType.SWITCH,
+        name = "performance hud",
+        description = "display a hud with cpu and memory usage",
+        category = "rendering",
+        subcategory = "utils",
+    )
+    var displayPerformanceHud: Boolean = false
+
+    @Property(
+        type = PropertyType.SWITCH,
+        name = "Block breaking particles",
+        description = "disable the block breaking particles",
+        category = "rendering",
+        subcategory = "particles",
+        hidden = true
+    )
+    var disableBlockBreakParticle: Boolean = false
 
     init {
         initialize()
@@ -128,6 +166,22 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         registerListener(clazz.getDeclaredField("damageTintPresets")) { value: Int ->
             OverlayTextureListener.notifyColorChanged(DamageTintPresets.entries[value].color)
             damageTintColor = DamageTintPresets.entries[value].color
+        }
+
+        registerListener(clazz.getDeclaredField("displayHud")) { value: Boolean ->
+            if (value) {
+                Imguimc.pushRenderable(hud)
+            } else {
+                Imguimc.pullRenderable(hud)
+            }
+        }
+
+        registerListener(clazz.getDeclaredField("displayPerformanceHud")) { value: Boolean ->
+            if (value) {
+                Imguimc.pushRenderable(performanceHud)
+            } else {
+                Imguimc.pullRenderable(performanceHud)
+            }
         }
 
 //        registerListener(clazz.getDeclaredField("customWindowTitle")) { value: String ->
