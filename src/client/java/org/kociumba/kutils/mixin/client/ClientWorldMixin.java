@@ -16,16 +16,13 @@ import static org.kociumba.kutils.client.KutilsClientKt.getC;
 
 @Mixin(ClientWorld.class)
 public abstract class ClientWorldMixin extends World {
-
-    @Unique
-    private boolean shouldChangeTime = getC().getShouldChangeTime();
-
     protected ClientWorldMixin(MutableWorldProperties properties, RegistryKey<World> registryRef, DynamicRegistryManager registryManager, RegistryEntry<DimensionType> dimensionEntry, Supplier<Profiler> profiler, boolean isClient, boolean debugWorld, long biomeAccess, int maxChainedNeighborUpdates) {
         super(properties, registryRef, registryManager, dimensionEntry, profiler, isClient, debugWorld, biomeAccess, maxChainedNeighborUpdates);
     }
+
     @Override
     public float getRainGradient(float delta) {
-        if (shouldChangeTime) {
+        if (getC().getShouldChangeTime()) {
             return 0f;
         }
         return super.getRainGradient(delta);
@@ -33,7 +30,7 @@ public abstract class ClientWorldMixin extends World {
 
     @Override
     public float getThunderGradient(float delta) {
-        if (shouldChangeTime) {
+        if (getC().getShouldChangeTime()) {
             return 0f;
         }
         return super.getRainGradient(delta);

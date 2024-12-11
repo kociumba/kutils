@@ -1,12 +1,7 @@
 package org.kociumba.kutils.client
 
-
-fun McKeyMap.value(): Int = this.value
-
-/**
- * These are so fucked up and unhinged that I had to make this to never forget them
- */
-enum class McKeyMap(val value: Int) {
-    ESCAPE(256),
-    ENTER(257),
-}
+// that shit was too oop-ish
+//
+// the comments about this need to be preserved xd
+const val ESCAPE = 256 // WHY THE FUCK IS THIS ESCAPE, I'M ACTUALLY GONNA PUNCH A HOLE IN MY WALL
+const val ENTER = 257 // once again why is this enter in minecraft ???

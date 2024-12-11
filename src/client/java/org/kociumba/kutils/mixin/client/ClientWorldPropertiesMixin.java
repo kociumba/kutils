@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import static org.kociumba.kutils.client.KutilsClientKt.getC;
 
+@Environment(EnvType.CLIENT)
 @Mixin(ClientWorld.Properties.class)
 public abstract class ClientWorldPropertiesMixin {
 

@@ -107,27 +107,6 @@ class KutilsClient : ClientModInitializer {
             Imguimc.pushRenderable(performanceHud)
         }
 
-        // Font loading also seems to be fucked
-//        Thread {
-//            Thread.sleep(5000)
-//            if (largeRoboto == null) {
-//                try {
-//                    val io = ImGui.getIO()
-//                    val fontAtlas = io.fonts
-//                    largeRoboto = fontAtlas.addFontFromFileTTF("/assets/fonts/Roboto-Regular.ttf", 24f)
-//                } catch (e: Exception) {
-//                    log.error("Failed to load font", e)
-//                }
-//            }
-//        }.start()
-
-        // Seems like imgui saving is fucked in java/imgui
-//        Runtime.getRuntime().addShutdownHook(Thread {
-//            ImGui.saveIniSettingsToDisk("config/kutils.ini")
-//        })
-//
-//        ImGui.loadIniSettingsFromDisk("config/kutils.ini")
-
-        log.info("kutils fully loaded")
+        log.info("kutils initial setup done")
     }
 }

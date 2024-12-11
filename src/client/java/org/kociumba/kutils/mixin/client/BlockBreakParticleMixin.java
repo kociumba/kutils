@@ -1,45 +1,36 @@
 package org.kociumba.kutils.mixin.client;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.particle.Particle;
-import net.minecraft.client.particle.ParticleFactory;
 import net.minecraft.client.particle.ParticleManager;
-import net.minecraft.particle.ParticleEffect;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.LightmapTextureManager;
 import net.minecraft.particle.ParticleType;
-import net.minecraft.registry.Registries;
-import net.minecraft.util.Identifier;
+import net.minecraft.particle.ParticleTypes;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.HashMap;
+import static org.kociumba.kutils.client.KutilsClientKt.getC;
 
 /**
- * Does not actually work as intended
- * <br>
- * no idea why
+ * this finally works, I don't know why particles are such a pain in the ass
  */
-@SuppressWarnings("ALL")
+@Environment(EnvType.CLIENT)
 @Mixin(ParticleManager.class)
 public class BlockBreakParticleMixin {
-    final HashMap<String, Identifier> particlesAndClasses = new HashMap<>();
-
-    @Inject(method = "addParticle(Lnet/minecraft/particle/ParticleEffect;DDDDDD)Lnet/minecraft/client/particle/Particle;", at = @At("HEAD"), cancellable = true)
-    private void RemoveParticles(ParticleEffect parameters, double x, double y, double z, double velocityX, double velocityY, double velocityZ, CallbackInfoReturnable<Particle> cir) {
-        Identifier id = Registries.PARTICLE_TYPE.getId(parameters.getType());
-        if(id.toString().equals("block")) cir.cancel();
+    @Inject(method = "addBlockBreakParticles", at = @At("HEAD"), cancellable = true)
+    private void hideBlockBreakParticles(CallbackInfo ci) {
+        if (getC().getDisableBlockBreakParticle()) ci.cancel();
     }
 
-    @Inject(method = "addParticle(Lnet/minecraft/client/particle/Particle;)V", at = @At("HEAD"), cancellable = true)
-    private void removeDirectParticles(Particle particle, CallbackInfo ci) {
-        Object p = particlesAndClasses.get(particle.getClass().getSimpleName());
-        if(p == null) return;
-        else if (p.toString().equals("block")) ci.cancel();
-    }
-
-    @Inject(method = "registerFactory(Lnet/minecraft/particle/ParticleType;Lnet/minecraft/client/particle/ParticleFactory;)V", at = @At("HEAD"))
-    private void addClass(ParticleType<?> type, ParticleFactory<?> factory, CallbackInfo ci) {
-        particlesAndClasses.put(factory.getClass().getDeclaringClass().getSimpleName(), Registries.PARTICLE_TYPE.getId(type));
+    @Inject(method = "addBlockBreakingParticles", at = @At("HEAD"), cancellable = true)
+    private void hideBlockBreakingParticles(CallbackInfo ci) {
+        if (getC().getDisableBlockBreakParticle()) ci.cancel();
     }
 }

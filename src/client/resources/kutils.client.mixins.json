@@ -8,6 +8,7 @@
     "ClientPlayerEntityMixin",
     "ClientWorldMixin",
     "ClientWorldPropertiesMixin",
+    "MinecraftClientMixin",
     "OverlayTextureMixin"
   ],
   "injectors": {

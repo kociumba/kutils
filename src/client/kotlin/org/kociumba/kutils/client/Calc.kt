@@ -14,6 +14,7 @@ import gg.essential.elementa.dsl.*
 import gg.essential.elementa.state.BasicState
 import gg.essential.universal.UDesktop
 import gg.essential.universal.UMinecraft
+import gg.essential.universal.utils.MCMinecraft
 import imgui.ImGui
 import imgui.flag.ImGuiCond
 import imgui.flag.ImGuiInputTextFlags
@@ -159,17 +160,11 @@ object ImCalcUI : Renderable {
             }
         }
 
-        /**
-         * can now replace with ImGui.isKeyPressed(McKeyMap.ENTER.value())
-         */
-        if (ImGui.isKeyPressed(257)) { // once again why is this enter in minecraft ???
+        if (ImGui.isKeyPressed(ENTER)) {
             enterPressed = true
         }
 
-        /**
-         * can now replace with ImGui.isKeyPressed(McKeyMap.ESCAPE.value())
-         */
-        if (ImGui.isKeyPressed(256)) { // WHY THE FUCK IS THIS ESCAPE, I'M ACTUALLY GONNA PUNCH A HOLE IN MY WALL
+        if (ImGui.isKeyPressed(ESCAPE)) {
             displayingCalc = false
             Imguimc.pullRenderableAfterRender(this)
             enterPressed = false
@@ -187,9 +182,9 @@ object ImCalcUI : Renderable {
             enterPressed = false
         }
 
-        if (ImGui.button("Copy Result")) {
-            UDesktop.setClipboardString(outputBuffer.get())
-        }
+//        if (ImGui.button("Copy Result")) {
+//            UDesktop.setClipboardString(outputBuffer.get())
+//        }
 
         ImGui.end()
     }

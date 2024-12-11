@@ -1,9 +1,12 @@
 package org.kociumba.kutils.mixin.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
+import org.kociumba.kutils.KutilsLogger;
 import org.kociumba.kutils.client.OverlayTextureListener;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -21,6 +24,7 @@ import static org.kociumba.kutils.client.KutilsClientKt.getC;
  * The mixin adds a new listener for the overlay texture and updates the overlay color
  * when the damage tint is changed in the config.
  */
+@Environment(EnvType.CLIENT)
 @Mixin(OverlayTexture.class)
 public abstract class OverlayTextureMixin implements OverlayTextureListener {
 
@@ -30,11 +34,8 @@ public abstract class OverlayTextureMixin implements OverlayTextureListener {
     @Inject(method = "<init>", at = @At("TAIL"))
     private void initCustomOverlay(CallbackInfo ci) {
         this.updateOverlayColor(getC().getDamageTintColor());
-        OverlayTextureListener.Companion.register(this);
-    }
-
-    public void onColorChanged(Color newColor) {
-        updateOverlayColor(newColor);
+        OverlayTextureListener.Companion.register(this::updateOverlayColor);
+        KutilsLogger.INSTANCE.info("custom overlay texture listener initialized");
     }
 
     /**

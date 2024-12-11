@@ -1,6 +1,7 @@
 package org.kociumba.kutils.client
 
 import gg.essential.universal.UMinecraft
+import gg.essential.universal.utils.MCMinecraft
 import gg.essential.vigilance.Vigilant
 import gg.essential.vigilance.data.Property
 import gg.essential.vigilance.data.PropertyType
@@ -47,8 +48,6 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         allowAlpha = true
     )
     var damageTintColor: Color = Color(255, 0, 0, 77)
-    // the default is close to the minecraft default look, since the core shader method is bad,
-    // and it can not be disabled easily, one more reason to migrate this to a mixin
 
     @Property(
         type = PropertyType.SELECTOR,
@@ -105,16 +104,21 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     )
     var shouldAlwaysSprint: Boolean = false
 
-    /**
-     * Still need to get to figuring this out
-     */
     @Property(
-        type = PropertyType.TEXT,
+        type = PropertyType.SWITCH,
         name = "custom window title",
-        description = "change the window title",
+        description = "toggle if kutils should change the minecraft window title",
         category = "misc",
         subcategory = "window",
-        hidden = true
+    )
+    var shouldUseCustomWindowTitle: Boolean = false
+
+    @Property(
+        type = PropertyType.TEXT,
+        name = "custom window title text",
+        description = "⚠ window title updates when you close the settings menu",
+        category = "misc",
+        subcategory = "window",
     )
     var customWindowTitle: String = ""
 
@@ -139,11 +143,10 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
 
     @Property(
         type = PropertyType.SWITCH,
-        name = "Block breaking particles",
-        description = "disable the block breaking particles",
+        name = "disable block breaking particles",
+        description = "prevents block breaking particles from being rendered",
         category = "rendering",
         subcategory = "particles",
-        hidden = true
     )
     var disableBlockBreakParticle: Boolean = false
 
@@ -184,15 +187,15 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
             }
         }
 
-//        registerListener(clazz.getDeclaredField("customWindowTitle")) { value: String ->
-//            if (value.isNotEmpty()) {
-////                UMinecraft.getMinecraft().window.setTitle(value)
-//                mainWindow.setTitle(value)
-//            }
-//        }
+        registerListener(clazz.getDeclaredField("customWindowTitle")) { value: String ->
+            if (value.isNotEmpty()) {
+                WindowTitleListener.notifyWindowChanged(value)
+            }
+        }
 
         addDependency(clazz.getDeclaredField("damageTintColor"), clazz.getDeclaredField("shouldTintDamage"))
         addDependency(clazz.getDeclaredField("userTime"), clazz.getDeclaredField("shouldChangeTime"))
+        addDependency(clazz.getDeclaredField("customWindowTitle"), clazz.getDeclaredField("shouldUseCustomWindowTitle"))
 
         setCategoryDescription(
             "rendering",

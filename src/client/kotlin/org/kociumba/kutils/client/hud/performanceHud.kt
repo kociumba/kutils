@@ -5,11 +5,13 @@ import xyz.breadloaf.imguimc.interfaces.Renderable
 import xyz.breadloaf.imguimc.interfaces.Theme
 import java.lang.management.ManagementFactory
 import com.sun.management.OperatingSystemMXBean
+import gg.essential.universal.utils.MCMinecraft
 import imgui.ImGui
 import imgui.ImGuiIO
 import imgui.flag.ImGuiCond
 import imgui.flag.ImGuiWindowFlags
 import org.kociumba.kutils.client.imgui.coloredText
+import org.kociumba.kutils.client.imgui.setNextWindowPositionRelative
 import org.kociumba.kutils.client.largeRoboto
 import org.lwjgl.opengl.GL11
 
@@ -53,15 +55,18 @@ object performanceHud : Renderable {
         val totalMemory = runtime.totalMemory() / (1024 * 1024)
         val freeMemory = runtime.freeMemory() / (1024 * 1024)
         val usedMemory = totalMemory - freeMemory
+//        val gpuLoad = MCMinecraft.getInstance().gpuUtilizationPercentage
 
         val cpuColor = getUsageColor(cpuLoad)
         val memoryUsage = (usedMemory.toDouble() / maxMemory) * 100
         val memoryColor = getUsageColor(memoryUsage)
+//        val gpuColor = getUsageColor(gpuLoad)
 
 //        if (largeRoboto != null) {
 //        ImGui.pushFont(largeRoboto)
 
         ImGui.setNextWindowPos(15.0f, 35.0f, ImGuiCond.Once)
+//        setNextWindowPositionRelative(15.0f, 35.0f, ImGuiCond.Once)
 
         ImGui.begin(
             "Performance Metrics",
@@ -87,6 +92,10 @@ object performanceHud : Renderable {
         ImGui.text("CPU Load: ")
         ImGui.sameLine()
         coloredText(cpuColor,"%.2f%%".format(cpuLoad) + "%")
+
+//        ImGui.text("GPU Load: ")
+//        ImGui.sameLine()
+//        coloredText(gpuColor,"%.2f%%".format(gpuLoad) + "%")
 
 //        ImGui.text("Used Memory: %d MB".format(totalMemory))
 

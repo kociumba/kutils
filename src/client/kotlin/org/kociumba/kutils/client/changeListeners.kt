@@ -17,3 +17,19 @@ interface OverlayTextureListener {
 
     fun onColorChanged(newColor: Color)
 }
+
+interface WindowTitleListener {
+    companion object {
+        private val listeners = mutableListOf<WindowTitleListener>()
+
+        fun register(listener: WindowTitleListener) {
+            listeners.add(listener)
+        }
+
+        fun notifyWindowChanged(newTitle: String) {
+            listeners.forEach { it.onWindowTitleChanged(newTitle) }
+        }
+    }
+
+    fun onWindowTitleChanged(newTitle: String)
+}
