@@ -25,13 +25,17 @@ Implemented features:
 - always sprint toggle (does not reset on death)
 - cpu and ram usage statistics HUD
 - custom minecraft window title with in game config
-- remove block breaking particles
+- remove block breaking particles (may boost performance, because it fully disables them instead of hiding them)
+- fullbright using high gamma
 
 Basically done features 🤷:
-- in game calculator with simple controls
+- in game calculator with simple controls (just some ui adjustments left)
 
-WIP features:
+Features with weird issues 💀:
 - in game implementation of [Skydriver](https://www.github.com/kociumba/Skydriver) (my cli bazaar data app)
+> For any developer reading this, there are issues with the predictions math
+> which is essentially ported 1 to 1 from [Skydriver](https://www.github.com/kociumba/Skydriver).
+> I honestly think there are some wierd edge cases with the kotlinx serialization.
 
 Planned features:
 - more HUDs to display various info

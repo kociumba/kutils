@@ -4,12 +4,15 @@
   "package": "org.kociumba.kutils.mixin.client",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "BiomeEffectsMixin",
     "BlockBreakParticleMixin",
     "ClientPlayerEntityMixin",
     "ClientWorldMixin",
     "ClientWorldPropertiesMixin",
+    "DoubleSliderCallbacksMixin",
     "MinecraftClientMixin",
-    "OverlayTextureMixin"
+    "OverlayTextureMixin",
+    "SimpleOptionMixin"
   ],
   "injectors": {
     "defaultRequire": 1

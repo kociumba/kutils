@@ -8,6 +8,7 @@ import gg.essential.vigilance.data.PropertyType
 import imgui.ImGui
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
+import net.minecraft.client.MinecraftClient
 import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.performanceHud
 import xyz.breadloaf.imguimc.Imguimc
@@ -60,20 +61,29 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     )
     var damageTintPresets: Int = DamageTintPresets.PissYellow.ordinal
 
+    /*
+     * Gonna have to re add this later as an easter egg
+     */
     @Property(
-        type = PropertyType.BUTTON,
-        name = "reload resource changes",
-        description = "on account of me being a dumbass, and the minecraft api changing " +
-                "a lot since 1.8.9, I couldn't find a non buggy way of doing damage tinting without " +
-                "using core shaders as a resource, that's why you need to reload resources to apply the changes.",
+        type = PropertyType.SWITCH,
+        name = "custom water tint",
+        description = "toggle custom water coloring",
         category = "rendering",
-        subcategory = "entity",
-        placeholder = "reload",
+        subcategory = "world",
         hidden = true
     )
-    fun reload() {
-        UMinecraft.getMinecraft().reloadResourcesConcurrently()
-    }
+    var shouldColorWater: Boolean = false
+
+    @Property(
+        type = PropertyType.COLOR,
+        name = "custom water tint color",
+        description = "change the color of the water",
+        category = "rendering",
+        subcategory = "world",
+        allowAlpha = true,
+        hidden = true
+    )
+    var waterColor: Color = Color(0, 0, 255, 77)
 
     @Property(
         type = PropertyType.SWITCH,
@@ -103,15 +113,6 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         subcategory = "movement"
     )
     var shouldAlwaysSprint: Boolean = false
-
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "custom window title",
-        description = "toggle if kutils should change the minecraft window title",
-        category = "misc",
-        subcategory = "window",
-    )
-    var shouldUseCustomWindowTitle: Boolean = false
 
     @Property(
         type = PropertyType.TEXT,
@@ -149,6 +150,15 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         subcategory = "particles",
     )
     var disableBlockBreakParticle: Boolean = false
+
+    @Property(
+        type = PropertyType.SWITCH,
+        name = "toggle fullbright",
+        description = "this is just high gamma, does not remove lighting 🤷",
+        category = "rendering",
+        subcategory = "utils",
+    )
+    var shouldUseFullbright: Boolean = false
 
     init {
         initialize()
@@ -190,12 +200,21 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         registerListener(clazz.getDeclaredField("customWindowTitle")) { value: String ->
             if (value.isNotEmpty()) {
                 WindowTitleListener.notifyWindowChanged(value)
+            } else (
+                WindowTitleListener.notifyWindowChanged("")
+            )
+        }
+
+        registerListener(clazz.getDeclaredField("shouldUseFullbright")) { value: Boolean ->
+            if (value && MinecraftClient.getInstance().options != null) {
+                MCMinecraft.getInstance().options.gamma.value = 100.0
+            } else {
+                MCMinecraft.getInstance().options.gamma.value = 1.0
             }
         }
 
         addDependency(clazz.getDeclaredField("damageTintColor"), clazz.getDeclaredField("shouldTintDamage"))
         addDependency(clazz.getDeclaredField("userTime"), clazz.getDeclaredField("shouldChangeTime"))
-        addDependency(clazz.getDeclaredField("customWindowTitle"), clazz.getDeclaredField("shouldUseCustomWindowTitle"))
 
         setCategoryDescription(
             "rendering",

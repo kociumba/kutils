@@ -1,10 +1,8 @@
 package org.kociumba.kutils.client
 
-import gg.essential.universal.UChat
-import gg.essential.universal.UMinecraft
 import gg.essential.universal.UScreen
+import gg.essential.universal.utils.MCMinecraft
 import imgui.ImFont
-import imgui.ImGui
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
@@ -12,14 +10,9 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
 import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gui.screen.ChatScreen
-import net.minecraft.client.gui.screen.Screen
 import net.minecraft.client.option.KeyBinding
 import net.minecraft.client.util.InputUtil
-import net.minecraft.nbt.NbtCompound
-import org.kociumba.kutils.client.bazaar.BazaarAPI
 import org.kociumba.kutils.client.bazaar.bazaarUI
 import org.kociumba.kutils.client.hud.performanceHud
 import org.kociumba.kutils.log
@@ -34,6 +27,8 @@ var largeRoboto: ImFont? = null
 
 @Environment(EnvType.CLIENT)
 class KutilsClient : ClientModInitializer {
+    var loadedWindow = false
+    var loadedOptions = false
 
     override fun onInitializeClient() {
 
@@ -88,6 +83,16 @@ class KutilsClient : ClientModInitializer {
                     displayingCalc = false
                     Imguimc.pullRenderable(ImCalcUI)
                 }
+            }
+
+            if (!loadedWindow && c.customWindowTitle != "" && MinecraftClient.getInstance().window != null) {
+                loadedWindow = true
+                WindowTitleListener.notifyWindowChanged(c.customWindowTitle)
+            }
+
+            if (!loadedOptions && c.shouldUseFullbright && MinecraftClient.getInstance().options != null) {
+                loadedOptions = true
+                MCMinecraft.getInstance().options.gamma.value = 1000.0
             }
 
         }

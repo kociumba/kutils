@@ -5,6 +5,7 @@ import kotlinx.serialization.json.Json
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import org.kociumba.kutils.client.httpClient.Http
+import org.kociumba.kutils.log
 
 @Serializable
 data class Bazaar(
@@ -35,16 +36,17 @@ data class BuyInfo(
     val orders: Int
 )
 
+// some of these are failing to unmarshall
 @Serializable
 data class QuickStatus(
     val productId: String,
     val sellPrice: Double,
     val sellVolume: Int,
-    val sellMovingWeek: Int,
+    val sellMovingWeek: Long,
     val sellOrders: Int,
     val buyPrice: Double,
     val buyVolume: Int,
-    val buyMovingWeek: Int,
+    val buyMovingWeek: Long,
     val buyOrders: Int
 )
 
@@ -55,8 +57,9 @@ data class QuickStatus(
 object BazaarAPI {
     fun getBazaar(): Bazaar {
         var r = Http.getProxy("https://kutils-hypixel-proxy.kociumba.workers.dev/bazaar")
+//        log.info("Bazaar response: $r")
         var bazaar: Bazaar = Json.decodeFromString(r)
-//        log.info("Bazaar: ${bazaar.products["DIVAN_POWDER_COATING"]}")
+        log.info("Bazaar: ${bazaar.products["FLAWLESS_AMETHYST_GEM"]}")
         return bazaar
     }
 }

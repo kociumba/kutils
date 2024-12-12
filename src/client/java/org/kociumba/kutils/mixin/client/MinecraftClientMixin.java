@@ -12,8 +12,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import static org.kociumba.kutils.client.KutilsClientKt.getC;
-
 @Environment(EnvType.CLIENT)
 @Mixin(MinecraftClient.class)
 public class MinecraftClientMixin {
@@ -27,7 +25,7 @@ public class MinecraftClientMixin {
 
     @Inject(method = "getWindowTitle", at = @At("HEAD"), cancellable = true)
     private void getTitle(CallbackInfoReturnable<String> cir) {
-        if (getC().getShouldUseCustomWindowTitle()) {
+        if (lastTitle != "") {
             cir.setReturnValue(lastTitle);
         }
     }

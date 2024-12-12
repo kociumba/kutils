@@ -17,6 +17,7 @@ import xyz.breadloaf.imguimc.screen.ImGuiScreen
 import xyz.breadloaf.imguimc.screen.ImGuiWindow
 import java.awt.Color
 import java.lang.reflect.Field
+import kotlin.Double
 
 /**
  * Types of smoothing functions that can be applied to the data
@@ -29,23 +30,33 @@ enum class SmoothingTypes(val displayName: String) {
     NONE("None"),
 }
 
-var products = mutableMapOf<String, Product>()
+var products: Map<String, Product> = emptyMap()
 
 /**
  * Main bazaar related features ui
  *
  * The predictions are a little buggy so far but everything works fine
  * search is fucked tho for some reason
+ *
+ * Spent almost a whole day comparing this 1 to 1 with the go version
+ * everything is essentially the same, but the predictions are still fucked.
+ * At this point honestly think it's some edge cases with the kotlinx serialization 🤷
  */
 @Environment(EnvType.CLIENT)
 object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
     // default sigmoid for best results
     var smoothingType = ImInt(SmoothingTypes.SIGMOID.ordinal)
-    var priceLimit = ImDouble(1e32)
-    var weeklySalesLimit = ImDouble(1e32)
+    var priceLimit = ImDouble(0.toDouble()) // start as 0 to not show in ui
+    var priceLimitIf0 = 1e32
+    var weeklySalesLimit = ImDouble(0.toDouble())
+    var weeklySalesLimitIf0 = 1e32
     // default 10 results to display
     var displayResults = ImInt(10)
     var searchQuery = ImString("", 256)
+    var displayList: MutableList<Product> = mutableListOf()
+
+    const val minPrice = 100
+    const val minWeeklyVolume = 10
 
     private lateinit var alreadyInitialisedField: Field
 
@@ -103,10 +114,29 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                         try {
                             log.info("Getting bazaar data...")
                             var b = BazaarAPI.getBazaar()
-                            products.clear()
-                            b.products.filter { (_, p) ->
-                                productFilter(p)
-                            }.forEach { products[it.key] = it.value }
+                            products = emptyMap()
+                            // doing this couse of how this is displayed, might use something else
+                            if (priceLimit.get() == 0.0) {
+                                priceLimit.set(priceLimitIf0)
+                            }
+                            if (weeklySalesLimit.get() == 0.0) {
+                                weeklySalesLimit.set(weeklySalesLimitIf0)
+                            }
+//                            b.products.filter { (_, p) ->
+//                                productFilter(p)
+//                            }.forEach { products[it.key] = it.value }
+
+                            // store for later
+                            products = b.products
+                            displayList = productFilter(b.products)
+
+                            // reset the display values
+                            if (priceLimit.get() == 1e32) {
+                                priceLimit.set(0.0)
+                            }
+                            if (weeklySalesLimit.get() == 1e32) {
+                                weeklySalesLimit.set(0.0)
+                            }
                             log.info("Got ${products.size} products")
                         } catch (e: Exception) {
                             log.error("Something went wrong while filtering the bazaar data", e)
@@ -123,7 +153,7 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                     ImGui.setWindowSize(800f, 900f, ImGuiCond.Once)
 
                     ImGui.text("Bazaar data")
-                    if (ImGui.beginTable("##bazaarTable", 6, ImGuiTableFlags.Borders or ImGuiTableFlags.SizingFixedFit)) {
+                    if (ImGui.beginTable("##bazaarTable", 6, ImGuiTableFlags.Borders or ImGuiTableFlags.Resizable)) {
                         ImGui.tableSetupColumn("Product", ImGuiTableFlags.Sortable)
                         ImGui.tableSetupColumn("Sell Price", ImGuiTableFlags.Sortable)
                         ImGui.tableSetupColumn("Buy Price", ImGuiTableFlags.Sortable)
@@ -133,11 +163,15 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                         ImGui.tableHeadersRow()
                         try {
                             // Filter products based on the search query
-                            val filteredProducts = products.filter { (_, p) ->
-                                p.product_id.contains(searchQuery.get(), ignoreCase = true)
-                            }
+//                            val filteredProducts = products.filter { (_, p) ->
+//                                p.product_id.contains(searchQuery.get(), ignoreCase = true)
+//                            }
 
-                            filteredProducts.forEach { (_, p) ->
+//                            filteredProducts.forEach { (_, p) ->
+//                                renderProductRow(p)
+//                            }
+
+                            displayList.forEach { p ->
                                 renderProductRow(p)
                             }
                         } catch (e: Exception) {
@@ -151,9 +185,40 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
         )
     }
 
-    fun productFilter(p: Product): Boolean {
-        val minPrice = 1.0 // Adjust this value as needed
-        val minWeeklyVolume = 1.0 // Adjust this value as needed
+    // direct port of the go version
+    fun getDiff(p: Product): Double {
+        return -(p.quick_status.sellPrice - p.quick_status.buyPrice)
+    }
+
+    // direct port of the go version
+    fun productFilter(p: Map<String, Product>): MutableList<Product> {
+        val filtered: MutableList<Product> = mutableListOf()
+        for (v in p) {
+            if (isProductEligible(v.value)) {
+                filtered.addLast(v.value)
+            }
+        }
+
+        filtered.sortByDescending { getDiff(it) }
+
+        // omit this to show everything in this version
+//        if (filtered.size > displayResults.get()) {
+//            filtered.subList(displayResults.get(), filtered.size).clear()
+//        }
+
+        return filtered
+    }
+
+    // direct port of the go version, double-checked it
+    fun isProductEligible(p: Product): Boolean {
+        if (searchQuery.get() != "") {
+            if (!p.product_id.lowercase().contains(searchQuery.get().lowercase())) {
+                return false
+            }
+            return (p.quick_status.buyPrice < priceLimit.get() || priceLimit.get() == 1e32) &&
+                    (p.quick_status.sellMovingWeek > weeklySalesLimit.get() || weeklySalesLimit.get() == 1e32)
+        }
+
         return p.quick_status.buyPrice > minPrice &&
                 p.quick_status.sellPrice > minPrice &&
                 p.quick_status.sellMovingWeek > minWeeklyVolume &&

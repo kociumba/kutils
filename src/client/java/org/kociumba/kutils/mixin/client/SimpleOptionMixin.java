@@ -1,0 +1,47 @@
+package org.kociumba.kutils.mixin.client;
+
+import com.mojang.serialization.Codec;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.option.SimpleOption;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.text.Text;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Environment(EnvType.CLIENT)
+@Mixin(SimpleOption.class)
+public class SimpleOptionMixin<T> {
+
+    @Shadow
+    @Final
+    Text text;
+
+    @Shadow
+    T value;
+
+    /**
+     * Supposed to enable saving "illegal" values to the config for gamma
+     * <br>
+     * Not actually sure if it does anything xd
+     */
+    @Inject(method = "getCodec", at = @At("HEAD"), cancellable = true)
+    private void returnFakeCodec(CallbackInfoReturnable<Codec<Double>> cir) {
+        if (text.getString().equals(I18n.translate("options.gamma"))) {
+            cir.setReturnValue(Codec.DOUBLE);
+        }
+    }
+
+    @Inject(method = "setValue", at = @At("HEAD"), cancellable = true)
+    private void setRealValue(T value, CallbackInfo cir) {
+        if (text.getString().equals(I18n.translate("options.gamma"))) {
+            this.value = value;
+            cir.cancel();
+        }
+    }
+}

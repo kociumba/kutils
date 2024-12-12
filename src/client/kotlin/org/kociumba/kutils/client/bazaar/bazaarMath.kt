@@ -47,19 +47,20 @@ object BazaarMath {
         }
         val confidence = (sameSignCount.toDouble() / factors.size) * 100
 
-        log.debug("""
-            Prediction calculated
-            smoothingFunction: $s
-            prediction: $prediction
-            confidence: $confidence
-            priceSpread: $ps
-            volumeImbalance: $vi
-            orderImbalance: $oi
-            movingWeekTrend: $mwt
-            topOrderBookPressure: $tobp
-            volumeFactor: $vf
-            profitMarginFactor: $pmf
-        """.trimIndent())
+        // disabled couse it makes the debug log too big xd
+//        log.debug("""
+//            Prediction calculated
+//            smoothingFunction: $s
+//            prediction: $prediction
+//            confidence: $confidence
+//            priceSpread: $ps
+//            volumeImbalance: $vi
+//            orderImbalance: $oi
+//            movingWeekTrend: $mwt
+//            topOrderBookPressure: $tobp
+//            volumeFactor: $vf
+//            profitMarginFactor: $pmf
+//        """.trimIndent())
 
         return PredictionResult(prediction, confidence)
     }
@@ -105,21 +106,35 @@ object BazaarSmoothing {
 object BazaarProfitability {
     // PriceSpread calculates the percentage spread between buy and sell prices
     fun PriceSpread(product: Product): Double {
+        if (product.quick_status.buyPrice == 0.0 || product.quick_status.sellPrice == 0.0) {
+            return 0.0
+        }
         return (product.quick_status.buyPrice - product.quick_status.sellPrice) / product.quick_status.sellPrice * 100
     }
 
     // VolumeImbalance calculates the imbalance between buy and sell volumes
     fun VolumeImbalance(product: Product): Double {
+        if (product.quick_status.buyVolume == 0 || product.quick_status.sellVolume == 0) {
+            return 0.0
+        }
         return ((product.quick_status.buyVolume - product.quick_status.sellVolume) / (product.quick_status.buyVolume + product.quick_status.sellVolume) * 100).toDouble()
     }
 
     // OrderImbalance calculates the imbalance between buy and sell orders
     fun OrderImbalance(product: Product): Double {
+        if (product.quick_status.buyOrders == 0 || product.quick_status.sellOrders == 0) {
+            return 0.0
+        }
         return ((product.quick_status.buyOrders - product.quick_status.sellOrders) / (product.quick_status.buyOrders + product.quick_status.sellOrders) * 100).toDouble()
     }
 
     // MovingWeekTrend calculates the trend based on the past week's activity
+    //
+    // handle division by 0 couse it's causing errors
     fun MovingWeekTrend(product: Product): Double {
+        if (product.quick_status.buyMovingWeek == 0.toLong() || product.quick_status.sellMovingWeek == 0.toLong()) {
+            return 0.0
+        }
         return ((product.quick_status.buyMovingWeek - product.quick_status.sellMovingWeek) / (product.quick_status.buyMovingWeek + product.quick_status.sellMovingWeek) * 100).toDouble()
     }
 
