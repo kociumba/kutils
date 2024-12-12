@@ -64,6 +64,12 @@ Planned features:
 
 ## More on Bazaar UI
 
+> [!IMPORTANT]
+> There is still a weird issue with the predictions here,
+> which I can't reliably pinpoint. So for the time being just consider
+> the predictions inaccurate. Any other stats here are 100% straight from 
+> the hypixel api.
+
 This is the biggest part of the mod, and has a lot of extra features that have
 never made it into [Skydriver](https://www.github.com/kociumba/Skydriver).
 For example there is inflated item protection - you can set a custom percentage,
@@ -82,12 +88,12 @@ Most windows can also be docked to each other and collapsed.
 ### Bazaar UI Showcase
 
 <div style="display: flex; justify-content: space-between;">
-    <img src="/assets/img.png" width="49%" alt="common usage showcase">
-    <img src="/assets/1KAktb7(1).png" width="49%" alt="windows outside of minecraft">
+    <img src="https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/img.png" width="49%" alt="common usage showcase">
+    <img src="https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/1KAktb7(1).png" width="49%" alt="windows outside of minecraft">
 </div>
 <div style="display: flex; justify-content: space-between;">
-    <img src="/assets/ORy3jX0(1).png" width="49%" alt="funny text scaling">
-    <img src="/assets/QrVSBgF.png" width="49%" alt="docking showcase">
+    <img src="https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/ORy3jX0(1).png" width="49%" alt="funny text scaling">
+    <img src="https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/QrVSBgF.png" width="49%" alt="docking showcase">
 </div>
 
 ## Known issues
