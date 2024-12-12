@@ -1,6 +1,8 @@
 package org.kociumba.kutils.client.bazaar
 
+import imgui.ImFont
 import imgui.ImGui
+import imgui.flag.ImGuiCol
 import imgui.flag.ImGuiCond
 import imgui.flag.ImGuiTableFlags
 import imgui.type.ImDouble
@@ -9,8 +11,11 @@ import imgui.type.ImString
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.minecraft.text.Text
+import org.kociumba.kutils.client.c
+import org.kociumba.kutils.client.imgui.ImColor
 import org.kociumba.kutils.client.imgui.ImGuiKutilsTheme
 import org.kociumba.kutils.client.imgui.coloredText
+import org.kociumba.kutils.client.imgui.hexToImColor
 import org.kociumba.kutils.log
 import xyz.breadloaf.imguimc.Imguimc
 import xyz.breadloaf.imguimc.screen.ImGuiScreen
@@ -18,6 +23,7 @@ import xyz.breadloaf.imguimc.screen.ImGuiWindow
 import java.awt.Color
 import java.lang.reflect.Field
 import kotlin.Double
+import java.text.DecimalFormat
 
 /**
  * Types of smoothing functions that can be applied to the data
@@ -152,13 +158,23 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                     ImGui.setWindowPos(500f, 50f, ImGuiCond.Once)
                     ImGui.setWindowSize(800f, 900f, ImGuiCond.Once)
 
+                    // this is pretty cool xd
+                    var numberOfColumns = 7
+                    if (!c.showWeeklyTraffic) numberOfColumns--
+                    if (!c.showWeeklyAveragePrice) numberOfColumns--
+
                     ImGui.text("Bazaar data")
-                    if (ImGui.beginTable("##bazaarTable", 6, ImGuiTableFlags.Borders or ImGuiTableFlags.Resizable)) {
+                    if (ImGui.beginTable("##bazaarTable", numberOfColumns, ImGuiTableFlags.Borders or ImGuiTableFlags.Resizable)) {
                         ImGui.tableSetupColumn("Product", ImGuiTableFlags.Sortable)
                         ImGui.tableSetupColumn("Sell Price", ImGuiTableFlags.Sortable)
                         ImGui.tableSetupColumn("Buy Price", ImGuiTableFlags.Sortable)
                         ImGui.tableSetupColumn("Difference", ImGuiTableFlags.Sortable)
-                        ImGui.tableSetupColumn("Weekly traffic", ImGuiTableFlags.Sortable)
+                        if (c.showWeeklyTraffic) {
+                            ImGui.tableSetupColumn("Weekly traffic", ImGuiTableFlags.Sortable)
+                        }
+                        if (c.showWeeklyAveragePrice) {
+                        ImGui.tableSetupColumn("Weekly average price", ImGuiTableFlags.Sortable)
+                        }
                         ImGui.tableSetupColumn("Prediction/Confidence", ImGuiTableFlags.Sortable)
                         ImGui.tableHeadersRow()
                         try {
@@ -227,8 +243,52 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                 p.quick_status.sellMovingWeek > weeklySalesLimit.get() || weeklySalesLimit.get() == 1e32
     }
 
+    data class Averages(
+        var sellAverage : Double,
+        var buyAverage : Double
+    )
+
+    fun averagePrice(p: Product): Averages {
+        var r = Averages(0.0, 0.0)
+
+        p.sell_summary.forEach { s ->
+            r.sellAverage += s.pricePerUnit
+        }
+        r.sellAverage /= p.sell_summary.size
+
+        p.buy_summary.forEach { s ->
+            r.buyAverage += s.pricePerUnit
+        }
+        r.buyAverage /= p.buy_summary.size
+
+        return r
+    }
+
+    data class InflatedStatus(
+        var sellInflated : Boolean,
+        var buyInflated : Boolean
+    )
+
+    fun isInflated(p: Product, a: Averages) : InflatedStatus {
+        // c.shouldConsiderInflatedPercent is a float that is the percent the current price from quick_status
+        // needs to be higher than the average to be considered inflated
+        var s = InflatedStatus(false, false)
+
+        s.sellInflated = p.quick_status.sellPrice > a.sellAverage * (1 + c.shouldConsiderInflatedPercent)
+        s.buyInflated = p.quick_status.buyPrice > a.buyAverage * (1 + c.shouldConsiderInflatedPercent)
+
+        return s
+    }
+
+    private val decimalFormatter = DecimalFormat("#,##0.00")
+//    private val inflatedWarning = "⚠ " // renders as "? " couse I can't load custom fonts for now
+    private val inflatedWarning = "!!! " // alternate until I make the fork with font loading
+
     private fun renderProductRow(p: Product) {
         ImGui.tableNextRow()
+        val avg = averagePrice(p)
+        val infl = isInflated(p, avg)
+        val warn = hexToImColor("#ff0000")
 
         // Product ID
         ImGui.tableNextColumn()
@@ -236,28 +296,61 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
 
         // Sell Price
         ImGui.tableNextColumn()
-        coloredText("#94e2d5", "%.2f".format(p.quick_status.sellPrice))
+        if (infl.sellInflated) {
+            ImGui.pushStyleColor(ImGuiCol.Text, warn.r, warn.g, warn.b, warn.a)
+            ImGui.text(inflatedWarning)
+            if (ImGui.isItemHovered()) {
+                inflatedWarningTooltip()
+            }
+            ImGui.popStyleColor()
+            ImGui.sameLine()
+        }
+        coloredText("#94e2d5", decimalFormatter.format(p.quick_status.sellPrice))
 
         // Buy Price
         ImGui.tableNextColumn()
-        coloredText("#eba0ac", "%.2f".format(p.quick_status.buyPrice))
+        if (infl.buyInflated) {
+            ImGui.pushStyleColor(ImGuiCol.Text, warn.r, warn.g, warn.b, warn.a)
+            ImGui.text(inflatedWarning)
+            if (ImGui.isItemHovered()) {
+                inflatedWarningTooltip()
+            }
+            ImGui.popStyleColor()
+            ImGui.sameLine()
+        }
+        coloredText("#eba0ac", decimalFormatter.format(p.quick_status.buyPrice))
 
         // Difference
         ImGui.tableNextColumn()
         val difference = p.quick_status.buyPrice - p.quick_status.sellPrice
-        coloredText("#89b4fa", "%.2f".format(difference))
+        coloredText("#89b4fa", decimalFormatter.format(difference))
 
-        // Weekly traffic
-        ImGui.tableNextColumn()
-        coloredText("#fab387", "Sell: ${p.quick_status.sellMovingWeek}, Buy: ${p.quick_status.buyMovingWeek}")
+        if (c.showWeeklyTraffic) {
+            // Weekly traffic
+            ImGui.tableNextColumn()
+            // these are longs, needs different formatting
+            coloredText(
+                "#fab387",
+                "Sell: ${decimalFormatter.format(p.quick_status.sellMovingWeek)}, " +
+                        "Buy: ${decimalFormatter.format(p.quick_status.buyMovingWeek)}"
+            )
+        }
+
+        if (c.showWeeklyAveragePrice) {
+            // Averages
+            ImGui.tableNextColumn()
+            coloredText(
+                "#f9e2af", "Sell: ${decimalFormatter.format(avg.sellAverage)}, " +
+                        "Buy: ${decimalFormatter.format(avg.buyAverage)}"
+            )
+        }
 
         // Prediction
         ImGui.tableNextColumn()
-//        val (prediction, confidence) = getPred(mapOf("key" to p).entries.first())
         val (prediction, confidence) = BazaarMath.getPrediction(p, SmoothingTypes.entries[smoothingType.get()])
         val predictionText = when {
-            prediction > 0 -> "+ %.2f/%.2f%%".format(prediction, confidence)
-            prediction < 0 -> "- %.2f/%.2f%%".format(prediction, confidence)
+            prediction > 0 -> "+${decimalFormatter.format(prediction)}/${decimalFormatter.format(confidence)}%"
+            prediction < 0 -> "${decimalFormatter.format(prediction)}/${decimalFormatter.format(confidence)}%"
             else -> "N/A"
         }
         val predictionColor = when {
@@ -268,7 +361,11 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
         coloredText(predictionColor, predictionText)
     }
 
-
+    fun inflatedWarningTooltip() {
+        ImGui.beginTooltip()
+        ImGui.text("Price is inflated by more than ${c.shouldConsiderInflatedPercent * 100}%")
+        ImGui.endTooltip()
+    }
 
     fun reset() {
         log.debug("reset called")

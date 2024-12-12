@@ -3,6 +3,7 @@ package org.kociumba.kutils.client
 import gg.essential.universal.UScreen
 import gg.essential.universal.utils.MCMinecraft
 import imgui.ImFont
+import imgui.ImGui
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
@@ -54,7 +55,7 @@ class KutilsClient : ClientModInitializer {
             KeyBinding(
                 "Open Calculator (experimental WIP)",
                 InputUtil.Type.KEYSYM,
-                GLFW.GLFW_MOUSE_BUTTON_5,
+                GLFW.GLFW_KEY_B,
                 "kutils"
             )
         )

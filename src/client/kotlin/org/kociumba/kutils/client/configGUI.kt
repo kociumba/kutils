@@ -160,6 +160,54 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     )
     var shouldUseFullbright: Boolean = false
 
+    @Property(
+        type = PropertyType.DECIMAL_SLIDER,
+        name = "font scale",
+        description = "change the font size used in all of the hud elements",
+        category = "gui",
+        subcategory = "kutils ui",
+        maxF = 2.0f,
+        minF = 0.1f
+    )
+    var fontScale: Float = 1.0f
+
+    @Property(
+        type = PropertyType.SWITCH,
+        name = "show weekly traffic",
+        description = "show weekly bazaar traffic in the bazaar ui",
+        category = "gui",
+        subcategory = "kutils ui",
+    )
+    var showWeeklyTraffic: Boolean = false
+
+    @Property(
+        type = PropertyType.SWITCH,
+        name = "show weekly average price",
+        description = "show weekly average price in the bazaar ui",
+        category = "gui",
+        subcategory = "kutils ui",
+    )
+    var showWeeklyAveragePrice: Boolean = true
+
+    @Property(
+        type = PropertyType.PERCENT_SLIDER,
+        name = "inflated percent",
+        description = "change at which point the bazaar items should be considered inflated" +
+        " the percent is how many percent higher is the current sell/buy price than the average from last 7 days",
+        category = "gui",
+        subcategory = "kutils ui",
+    )
+    var shouldConsiderInflatedPercent = 0.2f
+
+    @Property(
+        type = PropertyType.SWITCH,
+        name = "remove selfie camera",
+        description = "removes the selfie camera when using F5",
+        category = "player",
+        subcategory = "camera",
+    )
+    var removeSelfieCamera: Boolean = true
+
     init {
         initialize()
 
@@ -211,6 +259,10 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
             } else {
                 MCMinecraft.getInstance().options.gamma.value = 1.0
             }
+        }
+
+        registerListener(clazz.getDeclaredField("fontScale")) { value: Float ->
+            ImGui.getIO().fontGlobalScale = value
         }
 
         addDependency(clazz.getDeclaredField("damageTintColor"), clazz.getDeclaredField("shouldTintDamage"))

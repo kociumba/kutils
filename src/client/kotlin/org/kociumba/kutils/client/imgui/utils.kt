@@ -34,6 +34,27 @@ fun hexToImColor(hexColor: String): ImColor {
 }
 
 /**
+ * Font setup, can't do it in the onModInitialize couse the imgui context is not created yet
+ *
+ * my solution is to have an object here that only executes the first time it is called
+ * and then any part of the mod that uses imgui can call it
+ *
+ * this is completely fucked, I have to make a custom for of the imgui-mc repo
+ * to be able to load custom fonts, 💀
+ */
+//object ImFontSetup  {
+//    private var once = false
+//
+//    fun setup() {
+//        if (!once) {
+//            once = true
+//            var io = ImGui.getIO()
+//            var font = io.fonts.addFontFromFileTTF("assets/fonts/CascadiaCode.ttf", 16f)
+//        }
+//    }
+//}
+
+/**
  * utils for sizing and positioning imgui windows using the coordinates and size of the minecraft window
  * instead of the whole monitor minecraft is displaying on
  *

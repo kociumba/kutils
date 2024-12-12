@@ -28,6 +28,8 @@ java {
 loom {
     splitEnvironmentSourceSets()
 
+    accessWidenerPath = file("src/main/resources/kutils.accesswidener")
+
     mods {
         register("kutils") {
             sourceSet("main")
@@ -71,6 +73,7 @@ dependencies {
     //  which sucks couse the new one has debug tools
     modImplementation(include("xyz.breadloaf.imguimc:imgui-mc:${project.property("imguimc_version")}")!!)
 }
+
 
 tasks.processResources {
     inputs.property("version", project.version)

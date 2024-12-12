@@ -4,6 +4,7 @@
   "version": "${version}",
   "name": "kutils",
   "description": "Collection of my personal utils and tweaks 😎",
+  "accessWidener": "kutils.accesswidener",
   "authors": ["kociumba"],
   "contact": {
     "sources": "https://github.com/kociumba/kutils",

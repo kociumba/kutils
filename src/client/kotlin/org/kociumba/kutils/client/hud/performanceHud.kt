@@ -6,6 +6,7 @@ import xyz.breadloaf.imguimc.interfaces.Theme
 import java.lang.management.ManagementFactory
 import com.sun.management.OperatingSystemMXBean
 import gg.essential.universal.utils.MCMinecraft
+import imgui.ImFont
 import imgui.ImGui
 import imgui.ImGuiIO
 import imgui.flag.ImGuiCond

@@ -10,6 +10,7 @@
     "ClientWorldMixin",
     "ClientWorldPropertiesMixin",
     "DoubleSliderCallbacksMixin",
+    "GameOptionsMixin",
     "MinecraftClientMixin",
     "OverlayTextureMixin",
     "SimpleOptionMixin"
