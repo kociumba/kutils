@@ -38,6 +38,7 @@ enum class SmoothingTypes(val displayName: String) {
 }
 
 var products: Map<String, Product> = emptyMap()
+var items: Map<String, Item> = emptyMap()
 
 /**
  * Main bazaar related features ui
@@ -125,6 +126,7 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                         try {
                             log.info("Getting bazaar data...")
                             var b = BazaarAPI.getBazaar()
+                            var i = ItemsAPI.getItems()
                             products = emptyMap()
                             // doing this couse of how this is displayed, might use something else
                             if (priceLimit.get() == 0.0) {
@@ -140,6 +142,10 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                             // store for later
                             products = b.products
                             displayList = productFilter(b.products)
+
+                            items = i.items.associateBy { item -> item.id }
+
+//                            log.info(items)
 
                             // reset the display values
                             if (priceLimit.get() == 1e32) {
@@ -274,6 +280,13 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
         var buyInflated : Boolean
     )
 
+    /**
+     * get real item name or product id if the name is not found
+     */
+    fun getRealName(p: Product) : String {
+        return items[p.product_id]?.name ?: p.product_id.lowercase()
+    }
+
     fun isInflated(p: Product, a: Averages) : InflatedStatus {
         // c.shouldConsiderInflatedPercent is a float that is the percent the current price from quick_status
         // needs to be higher than the average to be considered inflated
@@ -299,8 +312,9 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
         val warn = hexToImColor("#ff0000")
 
         // Product ID
+        // found the undocumented names xd
         ImGui.tableNextColumn()
-        coloredText("#cba6f7", p.product_id)
+        coloredText("#cba6f7", getRealName(p))
 
         // Sell Price
         ImGui.tableNextColumn()

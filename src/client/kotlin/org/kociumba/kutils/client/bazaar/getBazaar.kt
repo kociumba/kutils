@@ -19,7 +19,16 @@ data class Product(
     val product_id: String,
     val sell_summary: List<SellInfo>,
     val buy_summary: List<BuyInfo>,
-    val quick_status: QuickStatus
+    val quick_status: QuickStatus,
+    // these are undocumented xd
+    //
+    // so it turns out this is only included sometimes
+    // WHY ?
+    //
+    // gonna need to get this from /items and then map them together by product_id
+//    val category: String,
+//    val related: List<String>,
+//    val name: String
 )
 
 @Serializable
