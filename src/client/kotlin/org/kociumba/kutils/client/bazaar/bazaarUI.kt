@@ -5,6 +5,7 @@ import imgui.ImGui
 import imgui.flag.ImGuiCol
 import imgui.flag.ImGuiCond
 import imgui.flag.ImGuiTableFlags
+import imgui.type.ImBoolean
 import imgui.type.ImDouble
 import imgui.type.ImInt
 import imgui.type.ImString
@@ -60,6 +61,7 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
     var displayResults = ImInt(10)
     var searchQuery = ImString("", 256)
     var displayList: MutableList<Product> = mutableListOf()
+    var hideEnchantments = ImBoolean(false)
 
     const val minPrice = 100
     const val minWeeklyVolume = 10
@@ -113,7 +115,10 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                     ImGui.inputDouble("##weeklySalesLimit", weeklySalesLimit)
                     ImGui.text("Search")
                     ImGui.sameLine()
-                    ImGui.inputText("##search", searchQuery) // fucked for whatever reason, can not input text
+                    ImGui.inputText("##search", searchQuery)
+                    ImGui.text("Hide enchanted books")
+                    ImGui.sameLine()
+                    ImGui.checkbox("##hideEnchantments", hideEnchantments)
                     ImGui.text("Get and calculate data")
                     ImGui.sameLine()
                     if (ImGui.button("Calculate")) {
@@ -285,6 +290,9 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
     private val inflatedWarning = "!!! " // alternate until I make the fork with font loading
 
     private fun renderProductRow(p: Product) {
+        // hide enchantments
+        if (hideEnchantments.get() && p.quick_status.productId.lowercase().contains("ENCHANTMENT".lowercase())) return
+
         ImGui.tableNextRow()
         val avg = averagePrice(p)
         val infl = isInflated(p, avg)
