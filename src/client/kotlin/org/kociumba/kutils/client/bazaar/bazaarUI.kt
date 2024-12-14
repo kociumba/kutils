@@ -5,6 +5,7 @@ import imgui.ImGui
 import imgui.flag.ImGuiCol
 import imgui.flag.ImGuiCond
 import imgui.flag.ImGuiTableFlags
+import imgui.flag.ImGuiWindowFlags
 import imgui.type.ImBoolean
 import imgui.type.ImDouble
 import imgui.type.ImInt
@@ -22,7 +23,9 @@ import xyz.breadloaf.imguimc.Imguimc
 import xyz.breadloaf.imguimc.screen.ImGuiScreen
 import xyz.breadloaf.imguimc.screen.ImGuiWindow
 import java.awt.Color
+import java.awt.Desktop
 import java.lang.reflect.Field
+import java.net.URI
 import kotlin.Double
 import java.text.DecimalFormat
 
@@ -62,12 +65,18 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
     var displayResults = ImInt(10)
     var searchQuery = ImString("", 256)
     var displayList: MutableList<Product> = mutableListOf()
-    var hideEnchantments = ImBoolean(false)
+    var hideEnchantments = ImBoolean(true)
+    var error: BazaarRenderError? = null
 
     const val minPrice = 100
     const val minWeeklyVolume = 10
 
     private lateinit var alreadyInitialisedField: Field
+
+    data class BazaarRenderError (
+        var e : Exception,
+        var text : String
+    )
 
     /**
      * Hacky reflection shenanigans, but we need it to not duplicate imgui windows in memory
@@ -89,6 +98,14 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
         }
     }
 
+    fun genericTooltip(text: String) {
+        if (ImGui.isItemHovered()) {
+            ImGui.beginTooltip()
+            ImGui.text(text)
+            ImGui.endTooltip()
+        }
+    }
+
     /**
      * main ui render entry point
      */
@@ -102,6 +119,7 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                     ImGui.setWindowSize(400f, 200f, ImGuiCond.Once)
 
                     ImGui.text("Smoothing Type")
+                    genericTooltip("the smoothing type used by the predictions")
                     ImGui.sameLine()
                     ImGui.combo(
                         "##smoothingType",
@@ -109,18 +127,23 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                         SmoothingTypes.entries.map { it.displayName }.toTypedArray()
                     )
                     ImGui.text("Price Limit")
+                    genericTooltip("the price limit of displayed items")
                     ImGui.sameLine()
                     ImGui.inputDouble("##priceLimit", priceLimit)
                     ImGui.text("Weekly Sales Limit")
+                    genericTooltip("the weekly sales limit of displayed items")
                     ImGui.sameLine()
                     ImGui.inputDouble("##weeklySalesLimit", weeklySalesLimit)
                     ImGui.text("Search")
+                    genericTooltip("the search query for the bazaar")
                     ImGui.sameLine()
                     ImGui.inputText("##search", searchQuery)
                     ImGui.text("Hide enchanted books")
+                    genericTooltip("hide enchanted books from being shown")
                     ImGui.sameLine()
                     ImGui.checkbox("##hideEnchantments", hideEnchantments)
                     ImGui.text("Get and calculate data")
+                    genericTooltip("pull the newest bazaar data and calculate the predictions")
                     ImGui.sameLine()
                     if (ImGui.button("Calculate")) {
                         try {
@@ -129,34 +152,26 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                             var i = ItemsAPI.getItems()
                             products = emptyMap()
                             // doing this couse of how this is displayed, might use something else
-                            if (priceLimit.get() == 0.0) {
-                                priceLimit.set(priceLimitIf0)
-                            }
-                            if (weeklySalesLimit.get() == 0.0) {
-                                weeklySalesLimit.set(weeklySalesLimitIf0)
-                            }
+
 //                            b.products.filter { (_, p) ->
 //                                productFilter(p)
 //                            }.forEach { products[it.key] = it.value }
 
                             // store for later
                             products = b.products
-                            displayList = productFilter(b.products)
 
                             items = i.items.associateBy { item -> item.id }
 
 //                            log.info(items)
 
                             // reset the display values
-                            if (priceLimit.get() == 1e32) {
-                                priceLimit.set(0.0)
-                            }
-                            if (weeklySalesLimit.get() == 1e32) {
-                                weeklySalesLimit.set(0.0)
-                            }
+
                             log.info("Got ${products.size} products")
+
+                            throw Exception("test error")
                         } catch (e: Exception) {
                             log.error("Something went wrong while filtering the bazaar data", e)
+                            error = BazaarRenderError(e, "Something went wrong while filtering the bazaar data")
                         }
                     }
                 },
@@ -169,7 +184,9 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                     ImGui.setWindowPos(500f, 50f, ImGuiCond.Once)
                     ImGui.setWindowSize(800f, 900f, ImGuiCond.Once)
 
-                    // this is pretty cool xd
+                    error?.let { errorPopup(it) }
+
+                    // this is pretty funny
                     var numberOfColumns = 7
                     if (!c.showWeeklyTraffic) numberOfColumns--
                     if (!c.showWeeklyAveragePrice) numberOfColumns--
@@ -197,12 +214,29 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
 //                            filteredProducts.forEach { (_, p) ->
 //                                renderProductRow(p)
 //                            }
+                            if (priceLimit.get() == 0.0) {
+                                priceLimit.set(priceLimitIf0)
+                            }
+                            if (weeklySalesLimit.get() == 0.0) {
+                                weeklySalesLimit.set(weeklySalesLimitIf0)
+                            }
+
+                            displayList = productFilter(products) // will this lag too much ?
+                            // it's not, barely affects anything
+
+                            if (priceLimit.get() == 1e32) {
+                                priceLimit.set(0.0)
+                            }
+                            if (weeklySalesLimit.get() == 1e32) {
+                                weeklySalesLimit.set(0.0)
+                            }
 
                             displayList.forEach { p ->
                                 renderProductRow(p)
                             }
                         } catch (e: Exception) {
                             log.error("Something went wrong while trying to display the bazaar data", e)
+                            error = BazaarRenderError(e, "Something went wrong while trying to display the bazaar data")
                         }
                         ImGui.endTable()
                     }
@@ -210,6 +244,37 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                 false,
             )
         )
+    }
+
+    fun errorPopup(e: BazaarRenderError) {
+        val warn = hexToImColor("#e88888")
+        val link = hexToImColor("#4488ff")
+
+        ImGui.pushStyleColor(ImGuiCol.PopupBg, warn.r, warn.g, warn.b, warn.a)
+        ImGui.pushStyleColor(ImGuiCol.Text, 0f, 0f, 0f, 1f)
+        ImGui.openPopup("##errorPopup")
+        if (ImGui.beginPopup("##errorPopup")) {
+            ImGui.text("${e.text}\n ${e.e}\n\n Please report this here:")
+            ImGui.sameLine()
+            ImGui.textColored(link.r, link.g, link.b, link.a, "https://github.com/kociumba/kutils/issues")
+            if (ImGui.isItemClicked()) {
+                val url = "https://github.com/kociumba/kutils/issues"
+                val uri = URI(url)
+                try {
+                    Desktop.getDesktop().browse(uri)
+                } catch (e: Exception) {
+                    log.error("Failed to open the github issues page", e)
+                }
+            }
+
+            if (ImGui.button("Close")) {
+                error = null // reset
+                ImGui.closeCurrentPopup()
+            }
+            ImGui.endPopup()
+        }
+        ImGui.popStyleColor()
+        ImGui.popStyleColor()
     }
 
     // direct port of the go version
@@ -239,7 +304,7 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
     // direct port of the go version, double-checked it
     fun isProductEligible(p: Product): Boolean {
         if (searchQuery.get() != "") {
-            if (!p.product_id.lowercase().contains(searchQuery.get().lowercase())) {
+            if (!p.product_id.lowercase().contains(searchQuery.get().lowercase().trim { ch -> ch == ' ' })) {
                 return false
             }
             return (p.quick_status.buyPrice < priceLimit.get() || priceLimit.get() == 1e32) &&
@@ -300,7 +365,7 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
 
     private val decimalFormatter = DecimalFormat("#,##0.00")
 //    private val inflatedWarning = "⚠ " // renders as "? " couse I can't load custom fonts for now
-    private val inflatedWarning = "!!! " // alternate until I make the fork with font loading
+    private val inflatedWarning = "!!!" // alternate until I make the fork with font loading
 
     private fun renderProductRow(p: Product) {
         // hide enchantments
