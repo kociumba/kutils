@@ -12,7 +12,9 @@ import imgui.type.ImInt
 import imgui.type.ImString
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
+import net.minecraft.client.MinecraftClient
 import net.minecraft.text.Text
+import net.minecraft.util.Util
 import org.kociumba.kutils.client.c
 import org.kociumba.kutils.client.imgui.ImColor
 import org.kociumba.kutils.client.imgui.ImGuiKutilsTheme
@@ -66,6 +68,7 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
     var searchQuery = ImString("", 256)
     var displayList: MutableList<Product> = mutableListOf()
     var hideEnchantments = ImBoolean(true)
+    var displayInternalNames = ImBoolean(false)
     var error: BazaarRenderError? = null
 
     const val minPrice = 100
@@ -142,12 +145,17 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                     genericTooltip("hide enchanted books from being shown")
                     ImGui.sameLine()
                     ImGui.checkbox("##hideEnchantments", hideEnchantments)
+                    ImGui.text("Display internal names")
+                    genericTooltip("display the internal names of the items, used by hypixel")
+                    ImGui.sameLine()
+                    ImGui.checkbox("##displayInternalNames", displayInternalNames)
                     ImGui.text("Get and calculate data")
                     genericTooltip("pull the newest bazaar data and calculate the predictions")
                     ImGui.sameLine()
                     if (ImGui.button("Calculate")) {
                         try {
                             log.info("Getting bazaar data...")
+//                            throw Exception("test error")
                             var b = BazaarAPI.getBazaar()
                             var i = ItemsAPI.getItems()
                             products = emptyMap()
@@ -167,8 +175,6 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                             // reset the display values
 
                             log.info("Got ${products.size} products")
-
-                            throw Exception("test error")
                         } catch (e: Exception) {
                             log.error("Something went wrong while filtering the bazaar data", e)
                             error = BazaarRenderError(e, "Something went wrong while filtering the bazaar data")
@@ -246,31 +252,35 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
         )
     }
 
+    /**
+     * Wow, actual error handling with the user in mind, incredible xd
+     */
     fun errorPopup(e: BazaarRenderError) {
-        val warn = hexToImColor("#e88888")
-        val link = hexToImColor("#4488ff")
+        val warn = hexToImColor("#f5c6c6")
+        val link = hexToImColor("#8200ff")
 
         ImGui.pushStyleColor(ImGuiCol.PopupBg, warn.r, warn.g, warn.b, warn.a)
         ImGui.pushStyleColor(ImGuiCol.Text, 0f, 0f, 0f, 1f)
         ImGui.openPopup("##errorPopup")
         if (ImGui.beginPopup("##errorPopup")) {
-            ImGui.text("${e.text}\n ${e.e}\n\n Please report this here:")
-            ImGui.sameLine()
-            ImGui.textColored(link.r, link.g, link.b, link.a, "https://github.com/kociumba/kutils/issues")
+            ImGui.text("${e.text}\n  ${e.e}\n\nPlease report this here:")
+//            ImGui.sameLine()
+            ImGui.textColored(link.r, link.g, link.b, link.a, "https://github.com/kociumba/kutils/issues (clickable link)")
             if (ImGui.isItemClicked()) {
-                val url = "https://github.com/kociumba/kutils/issues"
-                val uri = URI(url)
+                val url = URI("https://github.com/kociumba/kutils/issues")
                 try {
-                    Desktop.getDesktop().browse(uri)
+                    Util.getOperatingSystem().open(url) // minecraft does some weird stuff
                 } catch (e: Exception) {
-                    log.error("Failed to open the github issues page", e)
+                    log.error("Failed to open the github issues page $e")
                 }
             }
 
+            ImGui.pushStyleColor(ImGuiCol.Text, 1f, 1f, 1f, 1f)
             if (ImGui.button("Close")) {
                 error = null // reset
                 ImGui.closeCurrentPopup()
             }
+            ImGui.popStyleColor()
             ImGui.endPopup()
         }
         ImGui.popStyleColor()
@@ -379,7 +389,8 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
         // Product ID
         // found the undocumented names xd
         ImGui.tableNextColumn()
-        coloredText("#cba6f7", getRealName(p))
+        var name: String = if(displayInternalNames.get()) p.product_id else getRealName(p)
+        coloredText("#cba6f7", name)
 
         // Sell Price
         ImGui.tableNextColumn()
