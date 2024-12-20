@@ -1,20 +1,16 @@
 package org.kociumba.kutils.client.hud
 
+import com.sun.management.OperatingSystemMXBean
+import imgui.ImGui
+import imgui.flag.ImGuiCond
+import imgui.flag.ImGuiWindowFlags
+import org.kociumba.kutils.client.c
 import org.kociumba.kutils.client.imgui.ImGuiKutilsTransparentTheme
+import org.kociumba.kutils.client.imgui.coloredText
 import xyz.breadloaf.imguimc.interfaces.Renderable
 import xyz.breadloaf.imguimc.interfaces.Theme
 import java.lang.management.ManagementFactory
-import com.sun.management.OperatingSystemMXBean
-import gg.essential.universal.utils.MCMinecraft
-import imgui.ImFont
-import imgui.ImGui
-import imgui.ImGuiIO
-import imgui.flag.ImGuiCond
-import imgui.flag.ImGuiWindowFlags
-import org.kociumba.kutils.client.imgui.coloredText
-import org.kociumba.kutils.client.imgui.setNextWindowPositionRelative
-import org.kociumba.kutils.client.largeRoboto
-import org.lwjgl.opengl.GL11
+import kotlin.or
 
 /**
  * Simple imgui based system usage hud
@@ -69,26 +65,26 @@ object performanceHud : Renderable {
         ImGui.setNextWindowPos(15.0f, 35.0f, ImGuiCond.Once)
 //        setNextWindowPositionRelative(15.0f, 35.0f, ImGuiCond.Once)
 
+        var windowFlags = ImGuiWindowFlags.NoDecoration or
+                ImGuiWindowFlags.NoDocking or
+                ImGuiWindowFlags.NoTitleBar or
+                ImGuiWindowFlags.NoResize or
+                ImGuiWindowFlags.AlwaysAutoResize or
+                ImGuiWindowFlags.NoFocusOnAppearing or
+                ImGuiWindowFlags.NoNav
+
+        if (!c.hudIsDraggable) {
+            windowFlags = windowFlags or ImGuiWindowFlags.NoInputs
+        }
+
+        if (!c.hudHasBackground) {
+            windowFlags = windowFlags or ImGuiWindowFlags.NoBackground
+        }
+
         ImGui.begin(
             "Performance Metrics",
-            ImGuiWindowFlags.NoDecoration
-                    or ImGuiWindowFlags.NoDocking
-                    or ImGuiWindowFlags.NoTitleBar
-                    or ImGuiWindowFlags.NoResize
-                    or ImGuiWindowFlags.AlwaysAutoResize
-//                    or ImGuiWindowFlags.NoInputs
-                    or ImGuiWindowFlags.NoFocusOnAppearing
-                    or ImGuiWindowFlags.NoNav
+            windowFlags
         )
-
-//        // Invisible button for dragging
-//        val windowSize = ImGui.getContentRegionAvail()
-//        ImGui.invisibleButton("drag", windowSize.x, windowSize.y)
-//        if (ImGui.isMouseDragging(0)) {
-//            val mouseDelta = ImGui.getMouseDragDelta(0)
-//            ImGui.setWindowPos(ImGui.getWindowPos().x + mouseDelta.x, ImGui.getWindowPos().y + mouseDelta.y)
-//            ImGui.resetMouseDragDelta(0)
-//        }
 
         ImGui.text("CPU Load: ")
         ImGui.sameLine()

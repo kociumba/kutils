@@ -2,6 +2,7 @@ package org.kociumba.kutils.client.imgui
 
 import imgui.ImGui
 import imgui.flag.ImGuiCol
+import org.kociumba.kutils.client.c
 import xyz.breadloaf.imguimc.interfaces.Theme
 
 /**
@@ -27,7 +28,7 @@ class ImGuiKutilsTheme: Theme {
         // Colors
         style.setColor(ImGuiCol.Text, 0.80f, 0.80f, 0.83f, 1.00f)
         style.setColor(ImGuiCol.TextDisabled, 0.24f, 0.23f, 0.29f, 1.00f)
-        style.setColor(ImGuiCol.WindowBg, 0.06f, 0.05f, 0.07f, 1.00f)
+        style.setColor(ImGuiCol.WindowBg, 0.06f, 0.05f, 0.07f, c.mainThemeBackgroundOpacity) // allow custom alpha
         style.setColor(ImGuiCol.ChildBg, 0.07f, 0.07f, 0.09f, 1.00f)
         style.setColor(ImGuiCol.PopupBg, 0.07f, 0.07f, 0.09f, 1.00f)
         style.setColor(ImGuiCol.Border, 0.80f, 0.80f, 0.83f, 0.88f)

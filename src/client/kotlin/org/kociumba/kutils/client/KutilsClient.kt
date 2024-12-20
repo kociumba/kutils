@@ -15,6 +15,7 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.client.option.KeyBinding
 import net.minecraft.client.util.InputUtil
 import org.kociumba.kutils.client.bazaar.bazaarUI
+import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.performanceHud
 import org.kociumba.kutils.log
 import org.lwjgl.glfw.GLFW
@@ -111,6 +112,10 @@ class KutilsClient : ClientModInitializer {
 
         if (c.displayPerformanceHud) {
             Imguimc.pushRenderable(performanceHud)
+        }
+
+        if (c.displayHud) {
+            Imguimc.pushRenderable(hud)
         }
 
         log.info("kutils initial setup done")

@@ -126,10 +126,9 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     @Property(
         type = PropertyType.SWITCH,
         name = "hud",
-        description = "",
+        description = "health/armor/damage hud (WIP)",
         category = "rendering",
         subcategory = "utils",
-        hidden = true
     )
     var displayHud: Boolean = true
 
@@ -201,6 +200,33 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
 
     @Property(
         type = PropertyType.SWITCH,
+        name = "hud has background",
+        description = "toggle the background of the hud",
+        category = "gui",
+        subcategory = "kutils ui",
+    )
+    var hudHasBackground: Boolean = true
+
+    @Property(
+        type = PropertyType.SWITCH,
+        name = "hud is draggable",
+        description = "toggle the draggability of the hud",
+        category = "gui",
+        subcategory = "kutils ui",
+    )
+    var hudIsDraggable: Boolean = true
+
+    @Property(
+        type = PropertyType.PERCENT_SLIDER,
+        name = "main theme background opacity",
+        description = "change the opacity of the main theme background",
+        category = "gui",
+        subcategory = "theme",
+    )
+    var mainThemeBackgroundOpacity: Float = 1.0f
+
+    @Property(
+        type = PropertyType.SWITCH,
         name = "remove selfie camera",
         description = "removes the selfie camera when using F5",
         category = "player",
@@ -242,6 +268,14 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
                 Imguimc.pushRenderable(performanceHud)
             } else {
                 Imguimc.pullRenderable(performanceHud)
+            }
+        }
+
+        registerListener(clazz.getDeclaredField("displayHud")) { value: Boolean ->
+            if (value) {
+                Imguimc.pushRenderable(hud)
+            } else {
+                Imguimc.pullRenderable(hud)
             }
         }
 

@@ -64,6 +64,10 @@ Features with weird issues 💀:
 > which is essentially ported 1 to 1 from [Skydriver](https://www.github.com/kociumba/Skydriver).
 > I honestly think there are some wierd edge cases with the kotlinx serialization.
 
+WIP features:
+- health/armor/damage hud
+- display other useful stats on the hud
+
 Planned features:
 - any qol or data display features
 - might think of trying something with custom skyblock content
@@ -105,6 +109,7 @@ Most windows can also be docked to each other and collapsed.
 ## Known issues
 
 - imgui windows are not positioned correctly when not in fullscreen
+- if an imgui hud window is opened while draggability is off, and outside the minecraft window, it will be stuck there
 
 ## FAQ
 
