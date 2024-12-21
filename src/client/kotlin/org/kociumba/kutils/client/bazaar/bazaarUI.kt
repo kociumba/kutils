@@ -1,6 +1,7 @@
 package org.kociumba.kutils.client.bazaar
 
 import imgui.ImGui
+import imgui.extension.implot.ImPlot
 import imgui.flag.ImGuiCol
 import imgui.flag.ImGuiCond
 import imgui.flag.ImGuiTableFlags
@@ -46,13 +47,14 @@ var items: Map<String, Item> = emptyMap()
  * At this point honestly think it's some edge cases with the kotlinx serialization 🤷
  */
 @Environment(EnvType.CLIENT)
-object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
+object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
     // default sigmoid for best results
     var smoothingType = ImInt(SmoothingTypes.SIGMOID.ordinal)
     var priceLimit = ImDouble(0.toDouble()) // start as 0 to not show in ui
     var priceLimitIf0 = 1e32
     var weeklySalesLimit = ImDouble(0.toDouble())
     var weeklySalesLimitIf0 = 1e32
+
     // default 10 results to display
     var displayResults = ImInt(10)
     var searchQuery = ImString("", 256)
@@ -66,15 +68,16 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
 
     private lateinit var alreadyInitialisedField: Field
 
-    data class BazaarRenderError (
-        var e : Exception,
-        var text : String
+    data class BazaarRenderError(
+        var e: Exception,
+        var text: String
     )
 
     /**
      * Hacky reflection shenanigans, but we need it to not duplicate imgui windows in memory
      */
     init {
+        ImPlot.createContext()
         try {
             alreadyInitialisedField = ImGuiScreen::class.java.getDeclaredField("alreadyInitialised")
             alreadyInitialisedField.isAccessible = true
@@ -188,7 +191,12 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                     if (!c.showWeeklyAveragePrice) numberOfColumns--
 
                     ImGui.text("Bazaar data")
-                    if (ImGui.beginTable("##bazaarTable", numberOfColumns, ImGuiTableFlags.Borders or ImGuiTableFlags.Resizable)) {
+                    if (ImGui.beginTable(
+                            "##bazaarTable",
+                            numberOfColumns,
+                            ImGuiTableFlags.Borders or ImGuiTableFlags.Resizable
+                        )
+                    ) {
                         ImGui.tableSetupColumn("Product", ImGuiTableFlags.Sortable)
                         ImGui.tableSetupColumn("Sell Price", ImGuiTableFlags.Sortable)
                         ImGui.tableSetupColumn("Buy Price", ImGuiTableFlags.Sortable)
@@ -197,7 +205,7 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
                             ImGui.tableSetupColumn("Weekly traffic", ImGuiTableFlags.Sortable)
                         }
                         if (c.showWeeklyAveragePrice) {
-                        ImGui.tableSetupColumn("Weekly average price", ImGuiTableFlags.Sortable)
+                            ImGui.tableSetupColumn("Weekly average price", ImGuiTableFlags.Sortable)
                         }
                         ImGui.tableSetupColumn("Prediction/Confidence", ImGuiTableFlags.Sortable)
                         ImGui.tableHeadersRow()
@@ -255,7 +263,13 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
         if (ImGui.beginPopup("##errorPopup")) {
             ImGui.text("${e.text}\n  ${e.e}\n\nPlease report this here:")
 //            ImGui.sameLine()
-            ImGui.textColored(link.r, link.g, link.b, link.a, "https://github.com/kociumba/kutils/issues (clickable link)")
+            ImGui.textColored(
+                link.r,
+                link.g,
+                link.b,
+                link.a,
+                "https://github.com/kociumba/kutils/issues (clickable link)"
+            )
             if (ImGui.isItemClicked()) {
                 val url = URI("https://github.com/kociumba/kutils/issues")
                 try {
@@ -320,8 +334,8 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
     }
 
     data class Averages(
-        var sellAverage : Double,
-        var buyAverage : Double
+        var sellAverage: Double,
+        var buyAverage: Double
     )
 
     fun averagePrice(p: Product): Averages {
@@ -341,18 +355,18 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
     }
 
     data class InflatedStatus(
-        var sellInflated : Boolean,
-        var buyInflated : Boolean
+        var sellInflated: Boolean,
+        var buyInflated: Boolean
     )
 
     /**
      * get real item name or product id if the name is not found
      */
-    fun getRealName(p: Product) : String {
+    fun getRealName(p: Product): String {
         return items[p.product_id]?.name ?: p.product_id.lowercase()
     }
 
-    fun isInflated(p: Product, a: Averages) : InflatedStatus {
+    fun isInflated(p: Product, a: Averages): InflatedStatus {
         // c.shouldConsiderInflatedPercent is a float that is the percent the current price from quick_status
         // needs to be higher than the average to be considered inflated
         var s = InflatedStatus(false, false)
@@ -364,8 +378,15 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
     }
 
     private val decimalFormatter = DecimalFormat("#,##0.00")
-//    private val inflatedWarning = "⚠ " // renders as "? " couse I can't load custom fonts for now
+
+    //    private val inflatedWarning = "⚠ " // renders as "? " couse I can't load custom fonts for now
     private val inflatedWarning = "!!!" // alternate until I make the fork with font loading
+    var showPriceGraphList: List<ShowPriceGraphData> = emptyList()
+
+    data class ShowPriceGraphData(
+        var show: Boolean,
+        var product: Product
+    )
 
     // updated to use the color from the config
     private fun renderProductRow(p: Product) {
@@ -381,9 +402,12 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
         // Product ID
         // found the undocumented names xd
         ImGui.tableNextColumn()
-        var name: String = if(displayInternalNames.get()) p.product_id else getRealName(p)
+        var name: String = if (displayInternalNames.get()) p.product_id else getRealName(p)
 //        coloredText("#cba6f7", name)
         coloredText(colorToHex(c.productIDColor), name)
+        if (ImGui.isItemClicked()) { showPriceGraphList += ShowPriceGraphData(true, p) } // price graph was refactored into a separate file couse it got big
+
+        for (i in showPriceGraphList) { priceGraphWindow(i.product) }
 
         // Sell Price
         ImGui.tableNextColumn()
