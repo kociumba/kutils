@@ -219,9 +219,9 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     )
     var hudIsDraggable: Boolean = true
 
-    /*
-     * hidden couse of the theme section
-     */
+    /**
+      * hidden couse of the theme section
+      */
     @Property(
         type = PropertyType.PERCENT_SLIDER,
         name = "main theme background opacity",
@@ -241,15 +241,15 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     )
     var removeSelfieCamera: Boolean = true
 
-    /*
-     * Theme customisation
-     *
-     * user colors and values
-     */
+    /**
+      * Theme customisation
+      *
+      * user colors and values
+      */
 
-    /*
-     * options related to the imgui theme
-     */
+    /**
+      * options related to the imgui theme
+      */
     @Property(
         type = PropertyType.COLOR,
         name = "window background",
@@ -281,9 +281,9 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     var wholeWindowAlpha: Float = 1.0f
 //    var childBackground = Color(0.07f, 0.07f, 0.09f, 1.00f)
 
-    /*
-     * options related to the bazaar display itself
-     */
+    /**
+      * options related to the bazaar display itself
+      */
     @Property(
         type = PropertyType.COLOR,
         name = "product ID color",

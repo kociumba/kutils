@@ -97,6 +97,10 @@ class KutilsClient : ClientModInitializer {
                 MCMinecraft.getInstance().options.gamma.value = 1000.0
             }
 
+            if (MinecraftClient.getInstance().isFinishedLoading && c.fontScale != 1.0f) {
+                ImGui.getIO().fontGlobalScale = c.fontScale
+            }
+
         }
 
         ClientCommandRegistrationCallback.EVENT.register { dispatcher, registryAccess ->

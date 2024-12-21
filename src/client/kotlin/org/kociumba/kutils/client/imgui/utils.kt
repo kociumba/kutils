@@ -27,6 +27,8 @@ data class ImColor(val r: Float, val g: Float, val b: Float, val a: Float)
 
 /**
  * Converts a hex string into ImColor for use in ImGui related rendering
+ *
+ * !!! do not pass alpha as it seems to break the decoding
  */
 fun hexToImColor(hexColor: String): ImColor {
     val color = Color.decode(hexColor)
@@ -37,7 +39,21 @@ fun colorToImColor(c: Color) : ImColor {
     return ImColor(c.red / 255f, c.green / 255f, c.blue / 255f, c.alpha / 255f)
 }
 
+/**
+  * Converts a Color object to a hex string
+  *
+  * ## Does not use alpha
+  */
 fun colorToHex(color: Color): String {
+    return String.format("#%02x%02x%02x", color.red, color.green, color.blue)
+}
+
+/**
+  * Converts a Color object to a hex string
+  *
+  * ## Uses alpha
+  */
+fun colorToHexWithAlpha(color: Color): String {
     return String.format("#%02x%02x%02x%02x", color.red, color.green, color.blue, color.alpha)
 }
 
