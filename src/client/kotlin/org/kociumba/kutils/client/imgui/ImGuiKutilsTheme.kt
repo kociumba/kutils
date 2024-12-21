@@ -11,10 +11,12 @@ import xyz.breadloaf.imguimc.interfaces.Theme
 class ImGuiKutilsTheme: Theme {
     override fun preRender() {
         val style = ImGui.getStyle()
+        var bg = c.mainWindowBackground
 
         // Style settings
 //        style.windowPadding = ImVec2(15f, 15f)
-        style.windowRounding = 5.0f
+//        style.windowRounding = 5.0f
+        style.windowRounding = c.windowRounding // need to make reset methods later
 //        style.framePadding = ImVec2(5f, 5f)
         style.frameRounding = 4.0f
 //        style.itemSpacing = ImVec2(12f, 8f)
@@ -24,11 +26,13 @@ class ImGuiKutilsTheme: Theme {
         style.scrollbarRounding = 9.0f
         style.grabMinSize = 5.0f
         style.grabRounding = 3.0f
+        style.alpha = c.wholeWindowAlpha
 
         // Colors
         style.setColor(ImGuiCol.Text, 0.80f, 0.80f, 0.83f, 1.00f)
         style.setColor(ImGuiCol.TextDisabled, 0.24f, 0.23f, 0.29f, 1.00f)
-        style.setColor(ImGuiCol.WindowBg, 0.06f, 0.05f, 0.07f, c.mainThemeBackgroundOpacity) // allow custom alpha
+//        style.setColor(ImGuiCol.WindowBg, 0.06f, 0.05f, 0.07f, 1.0f)
+        style.setColor(ImGuiCol.WindowBg, (bg.red / 255f), (bg.green / 255f), (bg.blue / 255f), (bg.alpha / 255f))
         style.setColor(ImGuiCol.ChildBg, 0.07f, 0.07f, 0.09f, 1.00f)
         style.setColor(ImGuiCol.PopupBg, 0.07f, 0.07f, 0.09f, 1.00f)
         style.setColor(ImGuiCol.Border, 0.80f, 0.80f, 0.83f, 0.88f)

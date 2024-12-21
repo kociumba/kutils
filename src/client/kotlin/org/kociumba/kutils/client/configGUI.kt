@@ -38,7 +38,7 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         category = "rendering",
         subcategory = "entity",
     )
-    var shouldTintDamage = true
+    var shouldTintDamage: Boolean = true
 
     @Property(
         type = PropertyType.COLOR,
@@ -123,14 +123,18 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     )
     var customWindowTitle: String = ""
 
+    /*
+     * not worth keeping for now, couse I don't wanna parse hypixel data to get skyblock stats
+     */
     @Property(
         type = PropertyType.SWITCH,
         name = "hud",
         description = "health/armor/damage hud (WIP)",
         category = "rendering",
         subcategory = "utils",
+        hidden = true
     )
-    var displayHud: Boolean = true
+    var displayHud: Boolean = false
 
     @Property(
         type = PropertyType.SWITCH,
@@ -196,7 +200,7 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         category = "gui",
         subcategory = "kutils ui",
     )
-    var shouldConsiderInflatedPercent = 0.2f
+    var shouldConsiderInflatedPercent: Float = 0.2f
 
     @Property(
         type = PropertyType.SWITCH,
@@ -216,12 +220,16 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     )
     var hudIsDraggable: Boolean = true
 
+    /*
+     * hidden couse of the theme section
+     */
     @Property(
         type = PropertyType.PERCENT_SLIDER,
         name = "main theme background opacity",
         description = "change the opacity of the main theme background",
         category = "gui",
         subcategory = "theme",
+        hidden = true
     )
     var mainThemeBackgroundOpacity: Float = 1.0f
 
@@ -233,6 +241,50 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         subcategory = "camera",
     )
     var removeSelfieCamera: Boolean = true
+
+    /*
+     * Theme customisation
+     *
+     * user colors and values
+     */
+
+    /*
+     * options related to the imgui theme
+     */
+    @Property(
+        type = PropertyType.COLOR,
+        name = "window background",
+        description = "change the background color of the main bazaar window",
+        category = "gui",
+        subcategory = "theme",
+        allowAlpha = true
+    )
+    var mainWindowBackground: Color = Color(0.06f, 0.05f, 0.07f, 1.0f)
+
+    @Property(
+        type = PropertyType.DECIMAL_SLIDER,
+        name = "window rounding",
+        description = "change the rounding of the window corners",
+        category = "gui",
+        subcategory = "theme",
+        maxF = 25.0f,
+        minF = 0.0f
+    )
+    var windowRounding: Float = 5.0f
+
+    @Property(
+        type = PropertyType.PERCENT_SLIDER,
+        name = "general opacity",
+        description = "change the opacity of the window and everything in it",
+        category = "gui",
+        subcategory = "theme",
+    )
+    var wholeWindowAlpha: Float = 1.0f
+//    var childBackground = Color(0.07f, 0.07f, 0.09f, 1.00f)
+
+    /*
+     * options related to the bazaar display itself
+     */
 
     init {
         initialize()
