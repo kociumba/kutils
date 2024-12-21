@@ -33,6 +33,14 @@ fun hexToImColor(hexColor: String): ImColor {
     return ImColor(color.red / 255f, color.green / 255f, color.blue / 255f, color.alpha / 255f)
 }
 
+fun colorToImColor(c: Color) : ImColor {
+    return ImColor(c.red / 255f, c.green / 255f, c.blue / 255f, c.alpha / 255f)
+}
+
+fun colorToHex(color: Color): String {
+    return String.format("#%02x%02x%02x%02x", color.red, color.green, color.blue, color.alpha)
+}
+
 /**
  * Font setup, can't do it in the onModInitialize couse the imgui context is not created yet
  *

@@ -1,34 +1,24 @@
 package org.kociumba.kutils.client.bazaar
 
-import imgui.ImFont
 import imgui.ImGui
 import imgui.flag.ImGuiCol
 import imgui.flag.ImGuiCond
 import imgui.flag.ImGuiTableFlags
-import imgui.flag.ImGuiWindowFlags
 import imgui.type.ImBoolean
 import imgui.type.ImDouble
 import imgui.type.ImInt
 import imgui.type.ImString
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
-import net.minecraft.client.MinecraftClient
 import net.minecraft.text.Text
 import net.minecraft.util.Util
 import org.kociumba.kutils.client.c
-import org.kociumba.kutils.client.imgui.ImColor
-import org.kociumba.kutils.client.imgui.ImGuiKutilsTheme
-import org.kociumba.kutils.client.imgui.coloredText
-import org.kociumba.kutils.client.imgui.hexToImColor
+import org.kociumba.kutils.client.imgui.*
 import org.kociumba.kutils.log
-import xyz.breadloaf.imguimc.Imguimc
 import xyz.breadloaf.imguimc.screen.ImGuiScreen
 import xyz.breadloaf.imguimc.screen.ImGuiWindow
-import java.awt.Color
-import java.awt.Desktop
 import java.lang.reflect.Field
 import java.net.URI
-import kotlin.Double
 import java.text.DecimalFormat
 
 /**
@@ -377,6 +367,7 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
 //    private val inflatedWarning = "⚠ " // renders as "? " couse I can't load custom fonts for now
     private val inflatedWarning = "!!!" // alternate until I make the fork with font loading
 
+    // updated to use the color from the config
     private fun renderProductRow(p: Product) {
         // hide enchantments
         if (hideEnchantments.get() && p.quick_status.productId.lowercase().contains("ENCHANTMENT".lowercase())) return
@@ -384,13 +375,15 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
         ImGui.tableNextRow()
         val avg = averagePrice(p)
         val infl = isInflated(p, avg)
-        val warn = hexToImColor("#ff0000")
+//        val warn = hexToImColor("#ff0000")
+        val warn = colorToImColor(c.inflatedItemWarningColor)
 
         // Product ID
         // found the undocumented names xd
         ImGui.tableNextColumn()
         var name: String = if(displayInternalNames.get()) p.product_id else getRealName(p)
-        coloredText("#cba6f7", name)
+//        coloredText("#cba6f7", name)
+        coloredText(colorToHex(c.productIDColor), name)
 
         // Sell Price
         ImGui.tableNextColumn()
@@ -403,7 +396,8 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
             ImGui.popStyleColor()
             ImGui.sameLine()
         }
-        coloredText("#94e2d5", decimalFormatter.format(p.quick_status.sellPrice))
+//        coloredText("#94e2d5", decimalFormatter.format(p.quick_status.sellPrice))
+        coloredText(colorToHex(c.sellPriceColor), decimalFormatter.format(p.quick_status.sellPrice))
 
         // Buy Price
         ImGui.tableNextColumn()
@@ -416,19 +410,26 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
             ImGui.popStyleColor()
             ImGui.sameLine()
         }
-        coloredText("#eba0ac", decimalFormatter.format(p.quick_status.buyPrice))
+//        coloredText("#eba0ac", decimalFormatter.format(p.quick_status.buyPrice))
+        coloredText(colorToHex(c.buyPriceColor), decimalFormatter.format(p.quick_status.buyPrice))
 
         // Difference
         ImGui.tableNextColumn()
         val difference = p.quick_status.buyPrice - p.quick_status.sellPrice
-        coloredText("#89b4fa", decimalFormatter.format(difference))
+//        coloredText("#89b4fa", decimalFormatter.format(difference))
+        coloredText(colorToHex(c.differenceColor), decimalFormatter.format(difference))
 
         if (c.showWeeklyTraffic) {
             // Weekly traffic
             ImGui.tableNextColumn()
             // these are longs, needs different formatting
+//            coloredText(
+//                "#fab387",
+//                "Sell: ${decimalFormatter.format(p.quick_status.sellMovingWeek)}, " +
+//                        "Buy: ${decimalFormatter.format(p.quick_status.buyMovingWeek)}"
+//            )
             coloredText(
-                "#fab387",
+                colorToHex(c.weeklyTrafficColor),
                 "Sell: ${decimalFormatter.format(p.quick_status.sellMovingWeek)}, " +
                         "Buy: ${decimalFormatter.format(p.quick_status.buyMovingWeek)}"
             )
@@ -437,8 +438,13 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
         if (c.showWeeklyAveragePrice) {
             // Averages
             ImGui.tableNextColumn()
+//            coloredText(
+//                "#f9e2af", "Sell: ${decimalFormatter.format(avg.sellAverage)}, " +
+//                        "Buy: ${decimalFormatter.format(avg.buyAverage)}"
+//            )
             coloredText(
-                "#f9e2af", "Sell: ${decimalFormatter.format(avg.sellAverage)}, " +
+                colorToHex(c.averagesColor),
+                "Sell: ${decimalFormatter.format(avg.sellAverage)}, " +
                         "Buy: ${decimalFormatter.format(avg.buyAverage)}"
             )
         }
@@ -452,8 +458,10 @@ object bazaarUI: ImGuiScreen(Text.literal("BazaarUI"), true) {
             else -> "N/A"
         }
         val predictionColor = when {
-            prediction > 0 -> "#a6e3a1"  // Green for positive
-            prediction < 0 -> "#f38ba8"  // Red for negative
+//            prediction > 0 -> "#a6e3a1"  // Green for positive
+            prediction > 0 -> colorToHex(c.positivePredictionColor)
+//            prediction < 0 -> "#f38ba8"  // Red for negative
+            prediction < 0 -> colorToHex(c.negativePredictionColor)
             else -> "#ffffff"  // White for N/A
         }
         coloredText(predictionColor, predictionText)

@@ -1,6 +1,5 @@
 package org.kociumba.kutils.client
 
-import gg.essential.universal.UMinecraft
 import gg.essential.universal.utils.MCMinecraft
 import gg.essential.vigilance.Vigilant
 import gg.essential.vigilance.data.Property
@@ -170,7 +169,7 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         category = "gui",
         subcategory = "kutils ui",
         maxF = 2.0f,
-        minF = 0.1f
+        minF = 0.1f,
     )
     var fontScale: Float = 1.0f
 
@@ -196,7 +195,7 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         type = PropertyType.PERCENT_SLIDER,
         name = "inflated percent",
         description = "change at which point the bazaar items should be considered inflated" +
-        " the percent is how many percent higher is the current sell/buy price than the average from last 7 days",
+                " the percent is how many percent higher is the current sell/buy price than the average from last 7 days",
         category = "gui",
         subcategory = "kutils ui",
     )
@@ -285,6 +284,95 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     /*
      * options related to the bazaar display itself
      */
+    @Property(
+        type = PropertyType.COLOR,
+        name = "product ID color",
+        description = "color of the product ID",
+        category = "gui",
+        subcategory = "theme",
+        allowAlpha = false
+    )
+    var productIDColor: Color = Color.decode("#cba6f7")
+
+    @Property(
+        type = PropertyType.COLOR,
+        name = "sell price color",
+        description = "color of the sell price",
+        category = "gui",
+        subcategory = "theme",
+        allowAlpha = false
+    )
+    var sellPriceColor: Color = Color.decode("#94e2d5")
+
+    @Property(
+        type = PropertyType.COLOR,
+        name = "buy price color",
+        description = "color of the buy price",
+        category = "gui",
+        subcategory = "theme",
+        allowAlpha = false
+    )
+    var buyPriceColor: Color = Color.decode("#eba0ac")
+
+    @Property(
+        type = PropertyType.COLOR,
+        name = "difference color",
+        description = "color of the difference",
+        category = "gui",
+        subcategory = "theme",
+        allowAlpha = false
+    )
+    var differenceColor: Color = Color.decode("#89b4fa")
+
+    @Property(
+        type = PropertyType.COLOR,
+        name = "weekly traffic color",
+        description = "color of the weekly traffic",
+        category = "gui",
+        subcategory = "theme",
+        allowAlpha = false
+    )
+    var weeklyTrafficColor: Color = Color.decode("#fab387")
+
+    @Property(
+        type = PropertyType.COLOR,
+        name = "averages color",
+        description = "color of the averages",
+        category = "gui",
+        subcategory = "theme",
+        allowAlpha = false
+    )
+    var averagesColor: Color = Color.decode("#f9e2af")
+
+    @Property(
+        type = PropertyType.COLOR,
+        name = "positive prediction color",
+        description = "color of the positive prediction",
+        category = "gui",
+        subcategory = "theme",
+        allowAlpha = false
+    )
+    var positivePredictionColor: Color = Color.decode("#a6e3a1")
+
+    @Property(
+        type = PropertyType.COLOR,
+        name = "negative prediction color",
+        description = "color of the negative prediction",
+        category = "gui",
+        subcategory = "theme",
+        allowAlpha = false
+    )
+    var negativePredictionColor: Color = Color.decode("#f38ba8")
+
+    @Property(
+        type = PropertyType.COLOR,
+        name = "inflated item warning color",
+        description = "color of the inflated item warning",
+        category = "gui",
+        subcategory = "theme",
+        allowAlpha = false
+    )
+    var inflatedItemWarningColor: Color = Color.decode("#ff0000")
 
     init {
         initialize()
@@ -335,8 +423,8 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
             if (value.isNotEmpty()) {
                 WindowTitleListener.notifyWindowChanged(value)
             } else (
-                WindowTitleListener.notifyWindowChanged("")
-            )
+                    WindowTitleListener.notifyWindowChanged("")
+                    )
         }
 
         registerListener(clazz.getDeclaredField("shouldUseFullbright")) { value: Boolean ->
