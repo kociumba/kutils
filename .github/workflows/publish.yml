@@ -1,0 +1,69 @@
+name: Publish kutils
+
+on:
+  push:
+    tags: [ "v*" ] # any version tag
+env:                                              
+  MINECRAFT_VERSION: 1.21.1                      
+  JAVA_VERSION: 21   
+  RELEASE_NAME: kutils
+  MODRINTH_TOKEN: ${{ secrets.PUBLISH_MODRINTH_TOKEN }}
+  CURSEFORGE_TOKEN: ${{ secrets.PUBLISH_CURSEFORGE_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}  
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'graalvm'
+          java-version: '21'
+
+      - name: Make Gradle Wrapper Executable
+        if: ${{ runner.os != 'Windows' }}
+        run: chmod +x ./gradlew
+
+      - name: Build
+        run: ./gradlew clean build
+
+      - name: Get Version from Tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+      - name: Publish (CurseForge/Modrinth/GitHub)
+        uses: Kir-Antipov/mc-publish@v3.2                                   
+        with:
+          curseforge-id: 1156605                                           
+          curseforge-token: ${{ env.CURSEFORGE_TOKEN }}
+          
+          modrinth-id: 4PbTtXAY                                             
+          modrinth-token: ${{ env.MODRINTH_TOKEN }}
+          
+          github-tag: ${{ github.ref_name }}
+          github-token: ${{ env.GITHUB_TOKEN }}
+          
+          files: |
+            build/libs/!(*-@(dev|sources|javadoc)).jar
+            
+          name: ${{ env.RELEASE_NAME }}                             
+          version: ${{ env.VERSION }}
+          version-type: beta                                      
+          loaders: fabric
+          game-versions: ${{ env.MINECRAFT_VERSION }}
+          
+          dependencies: |
+            fabric-api
+            fabric-language-kotlin
+          
+          java: ${{ env.JAVA_VERSION }}
