@@ -2,11 +2,16 @@ package org.kociumba.kutils.client.bazaar
 
 import imgui.ImGui
 import imgui.ImVec2
+import imgui.ImVec4
 import imgui.extension.implot.ImPlot
-import imgui.flag.ImGuiWindowFlags
+import imgui.extension.implot.flag.ImPlotAxisFlags
+import imgui.extension.implot.flag.ImPlotCol
+import imgui.extension.implot.flag.ImPlotFlags
+import org.kociumba.kutils.client.bazaar.bazaarUI.getRealName
+import org.kociumba.kutils.client.c
+import org.kociumba.kutils.log
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import org.kociumba.kutils.log
 
 fun PriceInfo.toImPlotData(days: Long = 7): ImPlotPriceData {
     val cutoffTime = Instant.now().minus(days, ChronoUnit.DAYS)
@@ -78,13 +83,25 @@ fun priceGraphWindow(p: Product) {
         fetchStates[productId] = true
         log.info("Fetching price graph for $productId")
 
-        priceDataMap[productId] = PriceDataFetcher.fetchPriceData(productId)?.toImPlotData(defaultTimeframe)!!
+        Thread {
+            priceDataMap[productId] = PriceDataFetcher.fetchPriceData(productId)?.toImPlotData(defaultTimeframe)!!
+        }.start()
     }
 
-    ImGui.text("Price graph for $productId")
+    ImGui.text("Price graph for ${getRealName(p)}")
 
     priceDataMap[productId]?.let { data ->
-        if (ImPlot.beginPlot("Price Graph###$productId", "Time", "Price", ImVec2(600f, 300f))) {
+        var bg = c.mainWindowBackground
+        ImPlot.pushStyleColor(ImPlotCol.FrameBg, ImVec4(bg.red / 255f, bg.green / 255f, bg.blue / 255f, bg.alpha / 255f))
+        if (ImPlot.beginPlot(
+                "Price Graph###$productId",
+                "Time",
+                "Price",
+                ImVec2(800f, 400f),
+                ImPlotFlags.AntiAliased or ImPlotFlags.NoChild or ImPlotFlags.Crosshairs or ImPlotFlags.YAxis2,
+                ImPlotAxisFlags.Time,
+                ImPlotAxisFlags.LockMin
+            )) {
             // Plot sell prices
             ImPlot.plotLine(
                 "Sell Prices",
@@ -93,6 +110,8 @@ fun priceGraphWindow(p: Product) {
                 data.sellPrices.size,
                 0
             )
+
+//            ImPlot.showMetricsWindow()
 
             // Plot buy prices
             ImPlot.plotLine(
@@ -104,6 +123,7 @@ fun priceGraphWindow(p: Product) {
             )
 
             ImPlot.endPlot()
+            ImPlot.popStyleColor()
         }
     } ?: run {
         ImGui.text("Loading data...")

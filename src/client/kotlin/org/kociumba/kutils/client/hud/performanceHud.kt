@@ -10,7 +10,6 @@ import org.kociumba.kutils.client.imgui.coloredText
 import xyz.breadloaf.imguimc.interfaces.Renderable
 import xyz.breadloaf.imguimc.interfaces.Theme
 import java.lang.management.ManagementFactory
-import kotlin.or
 
 /**
  * Simple imgui based system usage hud

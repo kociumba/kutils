@@ -4,7 +4,6 @@ import gg.essential.universal.UScreen
 import gg.essential.universal.utils.MCMinecraft
 import imgui.ImFont
 import imgui.ImGui
-import imgui.extension.implot.ImPlot
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
@@ -15,7 +14,6 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.option.KeyBinding
 import net.minecraft.client.util.InputUtil
-import org.apache.logging.log4j.core.util.ShutdownCallbackRegistry
 import org.kociumba.kutils.client.bazaar.bazaarUI
 import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.performanceHud
@@ -114,18 +112,6 @@ class KutilsClient : ClientModInitializer {
         if (MinecraftClient.getInstance().isFinishedLoading && c.fontScale != 1.0f) {
             ImGui.getIO().fontGlobalScale = c.fontScale
         }
-
-//        if (MinecraftClient.getInstance().isFinishedLoading) {
-//            ImPlot.createContext()
-//        }
-
-//        Runtime.getRuntime().addShutdownHook(Thread(
-//            Runnable {
-////                log.info("kutils shutting down")
-//                val ctx = ImPlot.getCurrentContext()
-//                ImPlot.destroyContext(ctx)
-//            }
-//        ))
 
         if (c.displayPerformanceHud) {
             Imguimc.pushRenderable(performanceHud)

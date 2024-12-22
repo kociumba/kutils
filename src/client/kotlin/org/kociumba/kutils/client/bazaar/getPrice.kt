@@ -1,16 +1,11 @@
 package org.kociumba.kutils.client.bazaar
 
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonNames
 import kotlinx.serialization.json.decodeFromStream
-import java.net.HttpURLConnection
-import java.net.URL
-import java.util.concurrent.CompletableFuture
 import org.kociumba.kutils.log
+import java.net.HttpURLConnection
 import java.net.URI
-import kotlin.io.inputStream
 
 @Serializable
 data class PriceInfo(

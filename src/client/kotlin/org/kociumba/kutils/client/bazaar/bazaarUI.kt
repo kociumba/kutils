@@ -512,7 +512,7 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
                 ImGui.setNextWindowSize(620f, 400f, ImGuiCond.FirstUseEver)
 
                 // Use the show boolean from ShowPriceGraphData
-                if (ImGui.begin("Price Graph###${data.product.product_id}", data::show.get(), ImGuiWindowFlags.AlwaysAutoResize)) {
+                if (ImGui.begin("Price Graph###${getRealName(data.product)}", data::show.get(), ImGuiWindowFlags.AlwaysAutoResize)) {
                     priceGraphWindow(data.product)
                 }
 
@@ -525,7 +525,6 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
             }
         }
 
-        // Remove closed windows from the list
         showPriceGraphList.removeAll(toRemove)
     }
 
