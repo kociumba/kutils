@@ -48,6 +48,7 @@ repositories {
     maven(url = "https://repo.essential.gg/repository/maven-public")
     maven(url = "https://maven.wispforest.io")
     maven(url = "https://repo.alignedcookie88.com/repository/maven-public/")
+    maven(url = "https://jitpack.io")
 }
 
 dependencies {
