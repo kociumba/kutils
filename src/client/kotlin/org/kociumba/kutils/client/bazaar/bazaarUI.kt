@@ -5,6 +5,7 @@ import imgui.extension.implot.ImPlot
 import imgui.flag.ImGuiCol
 import imgui.flag.ImGuiCond
 import imgui.flag.ImGuiTableFlags
+import imgui.flag.ImGuiWindowFlags
 import imgui.type.ImBoolean
 import imgui.type.ImDouble
 import imgui.type.ImInt
@@ -173,6 +174,7 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
                             error = BazaarRenderError(e, "Something went wrong while filtering the bazaar data")
                         }
                     }
+                    renderPriceGraphs()
                 },
                 false,
             ),
@@ -381,12 +383,13 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
 
     //    private val inflatedWarning = "⚠ " // renders as "? " couse I can't load custom fonts for now
     private val inflatedWarning = "!!!" // alternate until I make the fork with font loading
-    var showPriceGraphList: List<ShowPriceGraphData> = emptyList()
 
     data class ShowPriceGraphData(
-        var show: Boolean,
+        var show: ImBoolean,
         var product: Product
     )
+
+    private var showPriceGraphList = mutableListOf<ShowPriceGraphData>()
 
     // updated to use the color from the config
     private fun renderProductRow(p: Product) {
@@ -405,9 +408,12 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
         var name: String = if (displayInternalNames.get()) p.product_id else getRealName(p)
 //        coloredText("#cba6f7", name)
         coloredText(colorToHex(c.productIDColor), name)
-        if (ImGui.isItemClicked()) { showPriceGraphList += ShowPriceGraphData(true, p) } // price graph was refactored into a separate file couse it got big
-
-        for (i in showPriceGraphList) { priceGraphWindow(i.product) }
+        if (ImGui.isItemClicked()) {
+            // Only add if not already in the list
+            if (showPriceGraphList.none { it.product.product_id == p.product_id }) {
+                showPriceGraphList.add(ShowPriceGraphData(ImBoolean(true), p))
+            }
+        }
 
         // Sell Price
         ImGui.tableNextColumn()
@@ -495,6 +501,32 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
         ImGui.beginTooltip()
         ImGui.text("Price is inflated by more than ${c.shouldConsiderInflatedPercent * 100}%")
         ImGui.endTooltip()
+    }
+
+    private fun renderPriceGraphs() {
+        // Create a copy of the list to avoid concurrent modification
+        val toRemove = mutableListOf<ShowPriceGraphData>()
+
+        showPriceGraphList.forEach { data ->
+            if (data.show.get()) {
+                ImGui.setNextWindowSize(620f, 400f, ImGuiCond.FirstUseEver)
+
+                // Use the show boolean from ShowPriceGraphData
+                if (ImGui.begin("Price Graph###${data.product.product_id}", data::show.get(), ImGuiWindowFlags.AlwaysAutoResize)) {
+                    priceGraphWindow(data.product)
+                }
+
+                // If window was closed, mark for removal
+                if (!data.show.get()) {
+                    toRemove.add(data)
+                }
+
+                ImGui.end()
+            }
+        }
+
+        // Remove closed windows from the list
+        showPriceGraphList.removeAll(toRemove)
     }
 
     fun reset() {

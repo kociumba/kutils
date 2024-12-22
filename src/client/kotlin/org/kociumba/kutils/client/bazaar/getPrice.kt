@@ -1,11 +1,16 @@
 package org.kociumba.kutils.client.bazaar
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNames
+import kotlinx.serialization.json.decodeFromStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.CompletableFuture
 import org.kociumba.kutils.log
+import java.net.URI
+import kotlin.io.inputStream
 
 @Serializable
 data class PriceInfo(
@@ -31,23 +36,25 @@ object PriceDataFetcher {
         ignoreUnknownKeys = true
     }
 
-    fun fetchPriceData(itemId: String): CompletableFuture<PriceInfo?> {
-        return CompletableFuture.supplyAsync {
-            try {
-                val url = URL("https://pricehistory.notenoughupdates.org/api/price?item=$itemId")
-                val connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = "GET"
+    fun fetchPriceData(itemId: String): PriceInfo? {
+        try {
+            val url = URI("https://pricehistory.notenoughupdates.org?item=${itemId}").toURL()
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
 
-                if (connection.responseCode !in 200..299) {
-                    return@supplyAsync null
-                }
-
-                val response = connection.inputStream.bufferedReader().use { it.readText() }
-                return@supplyAsync json.decodeFromString<PriceInfo>(response)
-            } catch (e: Exception) {
-                log.error("Failed to fetch price data for $itemId", e)
-                return@supplyAsync null
+            if (connection.responseCode !in 200..299) {
+                log.warn("Failed to fetch price data for $itemId, status code: ${connection.responseCode}")
+                return null
             }
+
+            // damn, actually works
+            connection.inputStream.use { inputStream ->
+                val prices = json.decodeFromStream<Map<String, Price>>(inputStream)
+                return PriceInfo(prices)
+            }
+        } catch (e: Exception) {
+            log.error("Failed to fetch price data for $itemId", e)
+            return null
         }
     }
 }

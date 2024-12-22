@@ -61,27 +61,30 @@ data class ImPlotPriceData(
     }
 }
 
-private var fetchStarted = false
-private var priceData: ImPlotPriceData? = null
-private const val defaultTimeframe = 7L // days
+private var fetchStates = mutableMapOf<String, Boolean>()
+private var priceDataMap = mutableMapOf<String, ImPlotPriceData>()
+private const val defaultTimeframe = 100L // days
 
 fun priceGraphWindow(p: Product) {
-    if (!fetchStarted) {
-        fetchStarted = true
-        log.info("Fetching price graph for ${p.product_id}")
+    val productId = p.product_id
 
-        PriceDataFetcher.fetchPriceData(p.product_id).thenAccept { result ->
-            result?.let {
-                priceData = it.toImPlotData(defaultTimeframe)
-            }
-        }
+    // Initialize fetch state if needed
+    if (!fetchStates.containsKey(productId)) {
+        fetchStates[productId] = false
     }
 
-    ImGui.begin("Price Graph", ImGuiWindowFlags.AlwaysAutoResize)
-    ImGui.text("Price graph for ${p.product_id}")
+    // Start fetch if not already started
+    if (fetchStates[productId] == false) {
+        fetchStates[productId] = true
+        log.info("Fetching price graph for $productId")
 
-    priceData?.let { data ->
-        if (ImPlot.beginPlot("Price Graph", "Time", "Price", ImVec2(600f, 300f))) {
+        priceDataMap[productId] = PriceDataFetcher.fetchPriceData(productId)?.toImPlotData(defaultTimeframe)!!
+    }
+
+    ImGui.text("Price graph for $productId")
+
+    priceDataMap[productId]?.let { data ->
+        if (ImPlot.beginPlot("Price Graph###$productId", "Time", "Price", ImVec2(600f, 300f))) {
             // Plot sell prices
             ImPlot.plotLine(
                 "Sell Prices",
@@ -105,6 +108,4 @@ fun priceGraphWindow(p: Product) {
     } ?: run {
         ImGui.text("Loading data...")
     }
-
-    ImGui.end()
 }
