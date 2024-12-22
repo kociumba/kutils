@@ -258,7 +258,7 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         subcategory = "theme",
         allowAlpha = true
     )
-    var mainWindowBackground: Color = Color(0.06f, 0.05f, 0.07f, 1.0f)
+    var mainWindowBackground: Color = Color(0.05f, 0.05f, 0.05f, 1.0f)
 
     @Property(
         type = PropertyType.DECIMAL_SLIDER,

@@ -8,7 +8,10 @@ This mod is fully client sided and tries to stay within the bounds of hypixel mo
 
 ## Usage
 
-Get the mod from [releases](https://github.com/kociumba/kutils/releases).
+Get the mod from:
+- [github releases](https://github.com/kociumba/kutils/releases)
+- [curseforge](https://www.curseforge.com/minecraft/mc-mods/kutils)
+- [modrinth](https://modrinth.com/mod/kutils)
 
 Install it on a fabric 1.21 or 1.21.1 instance.
 
@@ -27,10 +30,8 @@ Huge thanks to [imgui-mc](https://github.com/AlignedCookie88/imgui-mc) for updat
 bindings to 1.21+
 
 > [!IMPORTANT]
-> This unfortunately means that kutils is probably the first minecraft mod in history
-> that is not cross-platform, because imgui builds are platform specific.
-> For now windows builds are going to be provided, but I may automate 
-> cross-platform builds in the future.
+> The non-cross-platform issue should now be resolved, so if you want to help test the mod on platforms other than windows,
+> please do so and report any issues.
 
 Using imgui in minecraft is quite unconventional, so the experience of kutils resembles
 using a separate companion app hosted in minecraft more than a classic mod.
