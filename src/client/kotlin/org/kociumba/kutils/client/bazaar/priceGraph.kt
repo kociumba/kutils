@@ -9,6 +9,7 @@ import imgui.extension.implot.flag.ImPlotCol
 import imgui.extension.implot.flag.ImPlotFlags
 import org.kociumba.kutils.client.bazaar.bazaarUI.getRealName
 import org.kociumba.kutils.client.c
+import org.kociumba.kutils.client.imgui.spinner
 import org.kociumba.kutils.log
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -67,6 +68,7 @@ data class ImPlotPriceData(
 }
 
 private var fetchStates = mutableMapOf<String, Boolean>()
+private var loadingStates = mutableMapOf<String, Boolean>()
 private var priceDataMap = mutableMapOf<String, ImPlotPriceData>()
 private const val defaultTimeframe = 100L // days
 
@@ -76,29 +78,45 @@ fun priceGraphWindow(p: Product) {
     // Initialize fetch state if needed
     if (!fetchStates.containsKey(productId)) {
         fetchStates[productId] = false
+        loadingStates[productId] = false
     }
 
-    // Start fetch if not already started
-    if (fetchStates[productId] == false) {
+    fun fetchData() {
         fetchStates[productId] = true
+        loadingStates[productId] = true
         log.info("Fetching price graph for $productId")
 
         Thread {
             priceDataMap[productId] = PriceDataFetcher.fetchPriceData(productId)?.toImPlotData(defaultTimeframe)!!
+            loadingStates[productId] = false
         }.start()
     }
 
+    if (fetchStates[productId] == false) {
+        fetchData()
+    }
+
     ImGui.text("Price graph for ${getRealName(p)}")
+    if (ImGui.button("Refresh data")) {
+        fetchData()
+    }
+    if (loadingStates[productId] == true) {
+        ImGui.sameLine()
+        val buttonHeight = ImGui.getFrameHeight()
+        val radius = buttonHeight / 2 - 1f  // 1 looks the best
+        val thickness = buttonHeight / 7f   // 7 looks the best
+        spinner("##s", radius, thickness, ImGui.getColorU32(1f, 1f, 1f, 1f))
+    }
 
     priceDataMap[productId]?.let { data ->
         var bg = c.mainWindowBackground
         ImPlot.pushStyleColor(ImPlotCol.FrameBg, ImVec4(bg.red / 255f, bg.green / 255f, bg.blue / 255f, bg.alpha / 255f))
         if (ImPlot.beginPlot(
-                "Price Graph###$productId",
+                getRealName(p),
                 "Time",
                 "Price",
                 ImVec2(800f, 400f),
-                ImPlotFlags.AntiAliased or ImPlotFlags.NoChild or ImPlotFlags.Crosshairs or ImPlotFlags.YAxis2,
+                ImPlotFlags.AntiAliased or ImPlotFlags.NoChild,
                 ImPlotAxisFlags.Time,
                 ImPlotAxisFlags.LockMin
             )) {

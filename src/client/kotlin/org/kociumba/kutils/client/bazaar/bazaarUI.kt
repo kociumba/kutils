@@ -36,6 +36,9 @@ enum class SmoothingTypes(val displayName: String) {
 
 var products: Map<String, Product> = emptyMap()
 var items: Map<String, Item> = emptyMap()
+var status = BazaarFetchStaus(false, "Getting Bazaar Data...")
+
+data class BazaarFetchStaus(var fetching: Boolean, var message: String)
 
 /**
  * Main bazaar related features ui
@@ -150,25 +153,23 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
                         try {
                             log.info("Getting bazaar data...")
 //                            throw Exception("test error")
-                            var b = BazaarAPI.getBazaar()
-                            var i = ItemsAPI.getItems()
-                            products = emptyMap()
-                            // doing this couse of how this is displayed, might use something else
+                            var b: Bazaar
+                            var i: Items
+                            status.fetching = true
+                            Thread {
+                                b = BazaarAPI.getBazaar()
+                                i = ItemsAPI.getItems()
 
-//                            b.products.filter { (_, p) ->
-//                                productFilter(p)
-//                            }.forEach { products[it.key] = it.value }
+                                products = emptyMap()
 
-                            // store for later
-                            products = b.products
+                                products = b.products
 
-                            items = i.items.associateBy { item -> item.id }
+                                // map in game names to ids
+                                items = i.items.associateBy { item -> item.id }
 
-//                            log.info(items)
-
-                            // reset the display values
-
-                            log.info("Got ${products.size} products")
+                                status.fetching = false
+                                log.info("Got ${products.size} products")
+                            }.start()
                         } catch (e: Exception) {
                             log.error("Something went wrong while filtering the bazaar data", e)
                             error = BazaarRenderError(e, "Something went wrong while filtering the bazaar data")
@@ -191,6 +192,26 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
                     var numberOfColumns = 7
                     if (!c.showWeeklyTraffic) numberOfColumns--
                     if (!c.showWeeklyAveragePrice) numberOfColumns--
+
+                    if (status.fetching) {
+                        val windowSize = ImGui.getWindowSize()
+                        val windowPos = ImGui.getWindowPos()
+                        val spinnerRadius = 25f
+
+                        // Center the spinner
+                        val centerX = windowPos.x + windowSize.x / 2 - spinnerRadius
+                        val centerY = windowPos.y + windowSize.y / 2 - spinnerRadius
+
+                        ImGui.setCursorScreenPos(centerX, centerY)
+                        spinner("##s", spinnerRadius, 5f, ImGui.getColorU32(1f, 1f, 1f, 1f))
+
+                        return@ImGuiWindow
+                    }
+
+                    if (products.isEmpty()) {
+                        ImGui.text("Get current baazar data by clicking the calculate button!")
+                        return@ImGuiWindow
+                    }
 
                     ImGui.text("Bazaar data")
                     if (ImGui.beginTable(
@@ -408,6 +429,13 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
         var name: String = if (displayInternalNames.get()) p.product_id else getRealName(p)
 //        coloredText("#cba6f7", name)
         coloredText(colorToHex(c.productIDColor), name)
+        if (ImGui.isItemHovered()) {
+            ImGui.beginTooltip()
+            ImGui.text("Click to show price graph for:")
+            ImGui.bulletText("product_id = ${p.product_id}")
+            ImGui.bulletText("in game name = ${getRealName(p)}")
+            ImGui.endTooltip()
+        }
         if (ImGui.isItemClicked()) {
             // Only add if not already in the list
             if (showPriceGraphList.none { it.product.product_id == p.product_id }) {
@@ -512,7 +540,7 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
                 ImGui.setNextWindowSize(620f, 400f, ImGuiCond.FirstUseEver)
 
                 // Use the show boolean from ShowPriceGraphData
-                if (ImGui.begin("Price Graph###${getRealName(data.product)}", data::show.get(), ImGuiWindowFlags.AlwaysAutoResize)) {
+                if (ImGui.begin(getRealName(data.product), data::show.get(), ImGuiWindowFlags.AlwaysAutoResize)) {
                     priceGraphWindow(data.product)
                 }
 
@@ -530,10 +558,6 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
 
     fun reset() {
         log.debug("reset called")
-//        smoothingType.set(SmoothingTypes.SIGMOID.ordinal)
-//        priceLimit.set(1e32)
-//        weeklySalesLimit.set(1e32)
-//        displayResults.set(10)
         setAlreadyInitialised(false)
     }
 }

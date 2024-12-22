@@ -59,7 +59,7 @@ object BazaarAPI {
         var r = Http.getProxy("https://kutils-hypixel-proxy.kociumba.workers.dev/bazaar")
 //        log.info("Bazaar response: $r")
         var bazaar: Bazaar = Json.decodeFromString(r)
-        log.info("Bazaar: ${bazaar.products["FLAWLESS_AMETHYST_GEM"]}")
+//        log.info("Bazaar: ${bazaar.products["FLAWLESS_AMETHYST_GEM"]}")
         return bazaar
     }
 }
