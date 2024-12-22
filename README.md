@@ -13,7 +13,7 @@ Get the mod from:
 - [curseforge](https://www.curseforge.com/minecraft/mc-mods/kutils)
 - [modrinth](https://modrinth.com/mod/kutils)
 
-Install it on a fabric 1.21 or 1.21.1 instance.
+Install it on a fabric 1.21.1 instance.
 
 In game use `/kutils` or press `right shift` to open the in game config.
 
