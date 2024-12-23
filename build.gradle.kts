@@ -53,7 +53,7 @@ repositories {
     maven {
         url = uri("https://maven.pkg.github.com/kociumba/imgui-mc")
         credentials {
-            username = System.getenv("GITHUB_ACTOR")
+            username = System.getenv("GITHUB_ACTOR") ?: "kociumba" // hardcoding this couse it's just me
             password = System.getenv("GITHUB_TOKEN")
         }
     }
