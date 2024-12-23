@@ -47,8 +47,24 @@ repositories {
 
     maven(url = "https://repo.essential.gg/repository/maven-public")
     maven(url = "https://maven.wispforest.io")
-    maven(url = "https://repo.alignedcookie88.com/repository/maven-public/")
-    maven(url = "https://jitpack.io")
+//    maven(url = "https://repo.alignedcookie88.com/repository/maven-public/")
+//    maven(url = "https://jitpack.io")
+
+    maven {
+        url = uri("https://maven.pkg.github.com/kociumba/imgui-mc")
+        credentials {
+            username = "${System.getenv("GITHUB_ACTOR")}"
+            password = "${System.getenv("GITHUB_TOKEN")}"
+        }
+    }
+}
+
+tasks.register("printEnvironment") {
+    doLast {
+        System.getenv().forEach { t, u ->
+            println("$t -> $u")
+        }
+    }
 }
 
 dependencies {
@@ -72,10 +88,10 @@ dependencies {
     // would be cool to be able to include it in jar couse of fucked up versioning
     // if not we have to declare dependency on version down like this: "imguimc": "1.21.1-1.0.7"
     //  which sucks couse the new one has debug tools
-    modImplementation(include("xyz.breadloaf.imguimc:imgui-mc:${project.property("imguimc_version")}")!!)
+//    modImplementation(include("xyz.breadloaf.imguimc:imgui-mc:${project.property("imguimc_version")}")!!)
 
-    // using my fork through jitpack couse the other one is down
-//    modImplementation(include("com.github.kociumba:imgui-mc:-SNAPSHOT")!!)
+    // using my fork couse the other one is down
+    modImplementation(include("xyz.breadloaf.imguimc:imgui-mc:1.21.1-1.0.10")!!)
 }
 
 
