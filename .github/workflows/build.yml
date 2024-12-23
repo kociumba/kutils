@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  packages: read
 
 jobs:
   publish:
@@ -32,6 +33,9 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
         run: ./gradlew clean build
 
       - name: Get Version from Tag
