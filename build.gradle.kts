@@ -73,6 +73,9 @@ dependencies {
     // if not we have to declare dependency on version down like this: "imguimc": "1.21.1-1.0.7"
     //  which sucks couse the new one has debug tools
     modImplementation(include("xyz.breadloaf.imguimc:imgui-mc:${project.property("imguimc_version")}")!!)
+
+    // using my fork through jitpack couse the other one is down
+//    modImplementation(include("com.github.kociumba:imgui-mc:-SNAPSHOT")!!)
 }
 
 
