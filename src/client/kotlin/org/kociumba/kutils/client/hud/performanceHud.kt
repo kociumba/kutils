@@ -61,7 +61,7 @@ object performanceHud : Renderable {
 //        if (largeRoboto != null) {
 //        ImGui.pushFont(largeRoboto)
 
-        ImGui.setNextWindowPos(15.0f, 35.0f, ImGuiCond.Once)
+        ImGui.setNextWindowPos(15.0f, 35.0f, ImGuiCond.FirstUseEver)
 //        setNextWindowPositionRelative(15.0f, 35.0f, ImGuiCond.Once)
 
         var windowFlags = ImGuiWindowFlags.NoDecoration or

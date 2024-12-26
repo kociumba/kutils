@@ -115,8 +115,8 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
                 ImGuiKutilsTheme(),
                 Text.literal("Bazaar Settings"),
                 {
-                    ImGui.setWindowPos(50f, 50f, ImGuiCond.Once)
-                    ImGui.setWindowSize(400f, 200f, ImGuiCond.Once)
+                    ImGui.setWindowPos(50f, 50f, ImGuiCond.FirstUseEver)
+                    ImGui.setWindowSize(400f, 200f, ImGuiCond.FirstUseEver)
 
                     ImGui.text("Smoothing Type")
                     genericTooltip("the smoothing type used by the predictions")
@@ -183,8 +183,8 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
                 ImGuiKutilsTheme(),
                 Text.literal("Bazaar Results"),
                 {
-                    ImGui.setWindowPos(500f, 50f, ImGuiCond.Once)
-                    ImGui.setWindowSize(800f, 900f, ImGuiCond.Once)
+                    ImGui.setWindowPos(500f, 50f, ImGuiCond.FirstUseEver)
+                    ImGui.setWindowSize(800f, 900f, ImGuiCond.FirstUseEver)
 
                     error?.let { errorPopup(it) }
 

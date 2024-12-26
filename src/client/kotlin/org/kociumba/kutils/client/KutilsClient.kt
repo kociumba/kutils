@@ -16,6 +16,7 @@ import net.minecraft.client.util.InputUtil
 import org.kociumba.kutils.client.bazaar.bazaarUI
 import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.performanceHud
+import org.kociumba.kutils.client.testingGUI.testingGUI
 import org.kociumba.kutils.log
 import org.lwjgl.glfw.GLFW
 import xyz.breadloaf.imguimc.Imguimc
@@ -25,6 +26,7 @@ import java.nio.file.StandardCopyOption
 
 var c: ConfigGUI = ConfigGUI()
 var displayingCalc = false
+var displayTest = false
 
 //val mainWindow = UMinecraft.getMinecraft().window
 var largeRoboto: ImFont? = null
@@ -63,6 +65,15 @@ class KutilsClient : ClientModInitializer {
             )
         )
 
+        val testingKey: KeyBinding = KeyBindingHelper.registerKeyBinding(
+            KeyBinding(
+                "Open testing GUI",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_G,
+                "kutils"
+            )
+        )
+
         // Use once, minimize performance impact
         ClientTickEvents.END_CLIENT_TICK.register { client ->
             while (open.wasPressed()) {
@@ -86,6 +97,16 @@ class KutilsClient : ClientModInitializer {
                 } else {
                     displayingCalc = false
                     Imguimc.pullRenderable(ImCalcUI)
+                }
+            }
+
+            while (testingKey.wasPressed()) {
+                if (!displayTest) {
+                    displayTest = true
+                    Imguimc.pushRenderable(testingGUI)
+                } else {
+                    displayTest = false
+                    Imguimc.pullRenderable(testingGUI)
                 }
             }
 
@@ -149,6 +170,8 @@ class KutilsClient : ClientModInitializer {
             log.info("custom font loaded successfully")
         }
         ImguiLoader.initCallback = fontLoader
+
+        ImguiLoader.iniFileName = "config/imgui/kutils.ini"
 
         log.info("kutils initial setup done")
     }

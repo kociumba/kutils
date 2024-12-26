@@ -91,7 +91,7 @@ dependencies {
 //    modImplementation(include("xyz.breadloaf.imguimc:imgui-mc:${project.property("imguimc_version")}")!!)
 
     // using my fork couse the other one is down
-    modImplementation(include("xyz.breadloaf.imguimc:imgui-mc:1.21.1-1.0.11")!!)
+    modImplementation(include("xyz.breadloaf.imguimc:imgui-mc:1.21.1-1.0.12")!!)
 }
 
 
