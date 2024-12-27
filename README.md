@@ -2,7 +2,7 @@
 
 A collection of qol features
 and tweaks that I am used to from 1.8.9 but for 1.21+
-with some unique features for hypixel skyblock features.
+with some unique features for hypixel skyblock.
 
 This mod is fully client sided and tries to stay within the bounds of hypixel mod legality.
 

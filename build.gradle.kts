@@ -81,6 +81,7 @@ dependencies {
     modImplementation(include("gg.essential:universalcraft-1.21-fabric:365")!!)
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
 //    modImplementation("io.wispforest:owo-lib:${project.property("owo_version")}")
 //    include("io.wispforest:owo-sentinel:${project.property("owo_version")}")
