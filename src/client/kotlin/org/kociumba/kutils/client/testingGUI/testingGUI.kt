@@ -42,6 +42,13 @@ object testingGUI : Renderable {
                 }
             }
         }
+        if (ImGui.button("display SVG from file")) {
+            texture?.destroyTexture()
+            texture = ImImage().apply{
+                loadSVGFromURL(input.get())
+            }
+            log.info("Loaded texture: valid=${texture?.isValid}, glID=${texture?.glID}, prefix=${texture?.prefix}, width=${texture?.width}, height=${texture?.height}")
+        }
 
         texture?.let{ img ->
             when (img.loadingState) {

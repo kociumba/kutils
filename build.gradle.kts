@@ -93,6 +93,9 @@ dependencies {
 
     // using my fork couse the other one is down
     modImplementation(include("xyz.breadloaf.imguimc:imgui-mc:1.21.1-1.0.12")!!)
+
+    implementation("com.github.weisj:jsvg:1.6.0")
+
 }
 
 
