@@ -6,6 +6,8 @@
   "client": [
     "BiomeEffectsMixin",
     "BlockBreakParticleMixin",
+    "ChatHudAccessor",
+    "ChatHudMixin",
     "ClientPlayerEntityMixin",
     "ClientWorldMixin",
     "ClientWorldPropertiesMixin",

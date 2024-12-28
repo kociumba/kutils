@@ -11,9 +11,12 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.gui.hud.ChatHud
 import net.minecraft.client.option.KeyBinding
 import net.minecraft.client.util.InputUtil
 import org.kociumba.kutils.client.bazaar.bazaarUI
+import org.kociumba.kutils.client.chat.ChatImageUI
+import org.kociumba.kutils.client.chat.registerChatMessageHandler
 import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.performanceHud
 import org.kociumba.kutils.client.testingGUI.testingGUI
@@ -27,6 +30,8 @@ import java.nio.file.StandardCopyOption
 var c: ConfigGUI = ConfigGUI()
 var displayingCalc = false
 var displayTest = false
+val client: MinecraftClient = MinecraftClient.getInstance()
+var chatHud: ChatHud? = null
 
 //val mainWindow = UMinecraft.getMinecraft().window
 var largeRoboto: ImFont? = null
@@ -119,6 +124,14 @@ class KutilsClient : ClientModInitializer {
                 loadedOptions = true
                 MCMinecraft.getInstance().options.gamma.value = 1000.0
             }
+
+            if (chatHud == null) {
+                try {
+                    chatHud = client.inGameHud.chatHud
+                } catch (e: Exception) {
+                    log.error("Failed to get chat hud", e)
+                }
+            }
         }
 
         ClientCommandRegistrationCallback.EVENT.register { dispatcher, registryAccess ->
@@ -172,6 +185,10 @@ class KutilsClient : ClientModInitializer {
         ImguiLoader.initCallback = fontLoader
 
         ImguiLoader.iniFileName = "config/imgui/kutils.ini"
+
+        registerChatMessageHandler()
+
+        Imguimc.pushRenderable(ChatImageUI)
 
         log.info("kutils initial setup done")
     }
