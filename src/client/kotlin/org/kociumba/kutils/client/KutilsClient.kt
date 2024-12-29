@@ -70,14 +70,14 @@ class KutilsClient : ClientModInitializer {
             )
         )
 
-        val testingKey: KeyBinding = KeyBindingHelper.registerKeyBinding(
-            KeyBinding(
-                "Open testing GUI",
-                InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_G,
-                "kutils"
-            )
-        )
+//        val testingKey: KeyBinding = KeyBindingHelper.registerKeyBinding(
+//            KeyBinding(
+//                "Open testing GUI",
+//                InputUtil.Type.KEYSYM,
+//                GLFW.GLFW_KEY_G,
+//                "kutils"
+//            )
+//        )
 
         // Use once, minimize performance impact
         ClientTickEvents.END_CLIENT_TICK.register { client ->
@@ -105,15 +105,15 @@ class KutilsClient : ClientModInitializer {
                 }
             }
 
-            while (testingKey.wasPressed()) {
-                if (!displayTest) {
-                    displayTest = true
-                    Imguimc.pushRenderable(testingGUI)
-                } else {
-                    displayTest = false
-                    Imguimc.pullRenderable(testingGUI)
-                }
-            }
+//            while (testingKey.wasPressed()) {
+//                if (!displayTest) {
+//                    displayTest = true
+//                    Imguimc.pushRenderable(testingGUI)
+//                } else {
+//                    displayTest = false
+//                    Imguimc.pullRenderable(testingGUI)
+//                }
+//            }
 
             if (!loadedWindow && c.customWindowTitle != "" && MinecraftClient.getInstance().window != null) {
                 loadedWindow = true
@@ -188,8 +188,10 @@ class KutilsClient : ClientModInitializer {
 
         registerChatMessageHandler()
 
-        Imguimc.pushRenderable(ChatImageUI)
-        ChatImageUI.initialize()
+        if (c.shouldPreviewChatImages) {
+            Imguimc.pushRenderable(ChatImageUI)
+            ChatImageUI.initialize()
+        }
 
         log.info("kutils initial setup done")
     }

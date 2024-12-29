@@ -94,6 +94,8 @@ class ImImage : AutoCloseable {
             }
         } catch (e: Exception) {
             log.error("Failed to convert image to png", e)
+            this.loadingState = LoadingState.ERROR
+            this.errorMessage = e.message ?: "Unknown error"
             ByteArrayInputStream(byteArrayOf())
         }
     }

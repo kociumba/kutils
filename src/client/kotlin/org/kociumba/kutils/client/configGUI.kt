@@ -8,6 +8,7 @@ import imgui.ImGui
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.minecraft.client.MinecraftClient
+import org.kociumba.kutils.client.chat.ChatImageUI
 import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.performanceHud
 import xyz.breadloaf.imguimc.Imguimc
@@ -374,6 +375,15 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     )
     var inflatedItemWarningColor: Color = Color.decode("#ff0000")
 
+    @Property(
+        type = PropertyType.SWITCH,
+        name = "preview images in chat",
+        description = "toggle if kutils should show a preview of images in chat, when hovering over them",
+        category = "chat",
+        subcategory = "addons",
+    )
+    var shouldPreviewChatImages: Boolean = true
+
     init {
         initialize()
 
@@ -437,6 +447,15 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
 
         registerListener(clazz.getDeclaredField("fontScale")) { value: Float ->
             ImGui.getIO().fontGlobalScale = value
+        }
+
+        registerListener(clazz.getDeclaredField("shouldPreviewChatImages")) { value: Boolean ->
+            if (value) {
+                ChatImageUI.initialize()
+                Imguimc.pushRenderable(ChatImageUI)
+            } else {
+                Imguimc.pullRenderable(ChatImageUI)
+            }
         }
 
         addDependency(clazz.getDeclaredField("damageTintColor"), clazz.getDeclaredField("shouldTintDamage"))

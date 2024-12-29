@@ -1,24 +1,22 @@
 package org.kociumba.kutils.client.chat
 
 import imgui.ImGui
+import imgui.flag.ImGuiCol
 import imgui.flag.ImGuiCond
 import imgui.flag.ImGuiWindowFlags
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents
-import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.screen.ChatScreen
-import net.minecraft.text.HoverEvent
-import net.minecraft.text.OrderedText
 import net.minecraft.text.Text
+import net.minecraft.util.Util
+import org.kociumba.kutils.client.bazaar.bazaarUI
 import org.kociumba.kutils.client.client
 import org.kociumba.kutils.client.events.GetMessageAtEvent
+import org.kociumba.kutils.client.imgui.*
 import org.kociumba.kutils.log
-import org.kociumba.kutils.client.imgui.ImGuiKutilsTransparentTheme
-import org.kociumba.kutils.client.imgui.ImImage
-import org.kociumba.kutils.client.imgui.LoadingState
-import org.kociumba.kutils.client.imgui.spinner
-import java.util.concurrent.ConcurrentHashMap
 import xyz.breadloaf.imguimc.interfaces.Renderable
 import xyz.breadloaf.imguimc.interfaces.Theme
+import java.net.URI
+import java.util.concurrent.ConcurrentHashMap
 
 object ChatImageUI : Renderable {
     override fun getName(): String? {
@@ -47,48 +45,55 @@ object ChatImageUI : Renderable {
             ScreenEvents.afterRender(screen).register { screen, drawContext, mouseX, mouseY, tickDelta ->
                 if (screen !is ChatScreen) {
                     hoveredLink = null
-//                    log.info("Not a chat screen, resetting hovered link")
                     imageCache.clear()
                     return@register
                 }
 
-                // Trigger style check to fire our event
+                // triggers the event, very hacky but works 🤷
                 client.inGameHud.chatHud.getTextStyleAt(mouseX.toDouble(), mouseY.toDouble())
 
-                // Get the text content from our event
                 val text = currentContent?.string ?: run {
                     hoveredLink = null
-//                    log.info("No text content found")
                     return@register
                 }
 
-//                log.info("Message content: $text")
-
                 hoveredLink = urlRegex.find(text)?.value
-//                log.info("Found URL: $hoveredLink")
 
                 hoveredLink?.let { url ->
-//                    if (isImageUrl(url)) {
-//                        log.info("Loading image from $url")
+                    if (isImageUrl(url)) {
                         loadImage(url)
-//                    }
+                    }
                 }
             }
         }
     }
 
     private fun isImageUrl(url: String): Boolean {
-        return url.substringAfterLast('.').lowercase() in imageExtensions
+        // this is the proper check, but it limits us to links without metadata properties
+//        return url.substringAfterLast('.').lowercase() in imageExtensions
+        // check if contains, technically allows spoofing images, but nobody is doing that just without a reason
+        imageExtensions.forEach { ext -> if (url.contains(ext)) return true }
+        return false
+    }
+
+    private fun calculatePositionNextToMouse(
+        mouseX: Float,
+        mouseY: Float,
+        width: Float,
+        height: Float
+    ): Pair<Float, Float> {
+        val x = mouseX.coerceIn(0f, client.window.width - width)
+        val y = (mouseY - height).coerceIn(0f, client.window.height - height) // Subtract height to position bottom-left at mouse
+        return Pair(x, y)
     }
 
     private fun loadImage(url: String) {
-//        if (!isImageUrl(url)) return
         if (imageCache.containsKey(url)) return
 
         val image = ImImage()
         imageCache[url] = image
 
-        if (url.endsWith(".svg", ignoreCase = true)) {
+        if (url.substringAfterLast('.').lowercase() == "svg") {
             image.loadSVGFromURL(url)
         } else {
             image.loadImageFromURL(url) { success ->
@@ -98,6 +103,47 @@ object ChatImageUI : Renderable {
                 }
             }
         }
+    }
+
+    /**
+     * copy of the @BazaarUI error popup, adapted for this
+     */
+    fun errorPopup(e: ImImage) {
+        val warn = hexToImColor("#f5c6c6")
+        val link = hexToImColor("#8200ff")
+
+        ImGui.pushStyleColor(ImGuiCol.PopupBg, warn.r, warn.g, warn.b, warn.a)
+        ImGui.pushStyleColor(ImGuiCol.Text, 0f, 0f, 0f, 1f)
+        ImGui.openPopup("##errorPopup")
+        if (ImGui.beginPopup("##errorPopup")) {
+            ImGui.text("${e.errorMessage}\nPlease report this here:")
+//            ImGui.sameLine()
+            ImGui.textColored(
+                link.r,
+                link.g,
+                link.b,
+                link.a,
+                "https://github.com/kociumba/kutils/issues (clickable link)"
+            )
+            if (ImGui.isItemClicked()) {
+                val url = URI("https://github.com/kociumba/kutils/issues")
+                try {
+                    Util.getOperatingSystem().open(url) // minecraft does some weird stuff
+                } catch (e: Exception) {
+                    log.error("Failed to open the github issues page $e")
+                }
+            }
+
+            ImGui.pushStyleColor(ImGuiCol.Text, 1f, 1f, 1f, 1f)
+            if (ImGui.button("Close")) {
+                bazaarUI.error = null // reset
+                ImGui.closeCurrentPopup()
+            }
+            ImGui.popStyleColor()
+            ImGui.endPopup()
+        }
+        ImGui.popStyleColor()
+        ImGui.popStyleColor()
     }
 
     override fun render() {
@@ -129,23 +175,30 @@ object ChatImageUI : Renderable {
 
         hoveredLink?.let { url ->
             imageCache[url]?.let { img ->
+                val mouseX = client.mouse.x.toFloat()
+                val mouseY = client.mouse.y.toFloat()
+
                 when (img.loadingState) {
                     LoadingState.LOADING -> {
-                        ImGui.sameLine()
                         val buttonHeight = ImGui.getFrameHeight()
+                        val spinnerSize = buttonHeight * 1.5f - 1f
+                        val (x, y) = calculatePositionNextToMouse(
+                            mouseX,
+                            mouseY,
+                            spinnerSize * 2,
+                            spinnerSize * 2
+                        )
+                        ImGui.setCursorPos(x, y)
                         spinner(
                             "##loading",
-                            buttonHeight / 2 - 1f,
-                            buttonHeight / 7f,
+                            spinnerSize,
+                            buttonHeight / 4f,
                             ImGui.getColorU32(1f, 1f, 1f, 1f)
                         )
                     }
 
                     LoadingState.LOADED -> {
                         if (img.isValid) {
-                            val mouseX = client.mouse.x.toFloat()
-                            val mouseY = client.mouse.y.toFloat()
-
                             val maxWidth = client.window.width * 0.5f
                             val maxHeight = client.window.height * 0.5f
                             val scale = minOf(
@@ -157,19 +210,30 @@ object ChatImageUI : Renderable {
                             val finalWidth = img.width * scale
                             val finalHeight = img.height * scale
 
-                            val x = mouseX.coerceIn(0f, client.window.width - finalWidth)
-                            val y = mouseY.coerceIn(0f, client.window.height - finalHeight)
+                            val (x, y) = calculatePositionNextToMouse(mouseX, mouseY, finalWidth, finalHeight)
 
-                            ImGui.setCursorPos(x, y)
+                            // offset the image a bit from the mouse
+                            ImGui.setCursorPos(x + 10, y - 10)
+//                            ImGui.setNextWindowPos(x, y, ImGuiCond.Always)
 
+                            // put this in a window later, so the preview can exist outside minecraft
                             if (client.currentScreen is ChatScreen) {
+//                                ImGui.begin("##imagePrev", ImGuiWindowFlags.NoDecoration
+//                                        or ImGuiWindowFlags.NoNav
+//                                        or ImGuiWindowFlags.NoInputs
+//                                        or ImGuiWindowFlags.NoTitleBar
+//                                        or ImGuiWindowFlags.AlwaysAutoResize
+//                                )
+//                                ImGui.text("size: ${finalWidth}x${finalHeight}") //can display image info when in window
                                 ImGui.image(img.glID, finalWidth, finalHeight)
+//                                ImGui.end()
                             }
                         }
                     }
 
+                    // TODO: unfuck the error handling here
                     LoadingState.ERROR -> {
-                        ImGui.text("Error: ${img.errorMessage}")
+                        errorPopup(img)
                     }
 
                     else -> {} // Handle IDLE state
