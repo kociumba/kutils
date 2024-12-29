@@ -1,5 +1,6 @@
 package org.kociumba.kutils.client.chat
 
+import net.fabricmc.fabric.api.message.v1.ServerMessageEvents
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.hud.ChatHud
 import net.minecraft.client.gui.hud.ChatHudLine
@@ -22,8 +23,6 @@ fun registerChatMessageHandler() {
             // Handle links from `lineLinks` if needed
 //            log.info("Links detected in chat line: $lineLinks")
         }
-
-
     }
 }
 

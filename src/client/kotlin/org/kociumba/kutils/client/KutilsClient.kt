@@ -30,7 +30,7 @@ import java.nio.file.StandardCopyOption
 var c: ConfigGUI = ConfigGUI()
 var displayingCalc = false
 var displayTest = false
-val client: MinecraftClient = MinecraftClient.getInstance()
+var client: MinecraftClient = MinecraftClient.getInstance()
 var chatHud: ChatHud? = null
 
 //val mainWindow = UMinecraft.getMinecraft().window
@@ -189,6 +189,7 @@ class KutilsClient : ClientModInitializer {
         registerChatMessageHandler()
 
         Imguimc.pushRenderable(ChatImageUI)
+        ChatImageUI.initialize()
 
         log.info("kutils initial setup done")
     }
