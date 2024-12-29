@@ -178,6 +178,7 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
                     renderPriceGraphs()
                 },
                 false,
+                ImGuiWindowFlags.AlwaysAutoResize,
             ),
             ImGuiWindow(
                 ImGuiKutilsTheme(),
@@ -269,6 +270,7 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
                     }
                 },
                 false,
+                ImGuiWindowFlags.None,
             )
         )
     }

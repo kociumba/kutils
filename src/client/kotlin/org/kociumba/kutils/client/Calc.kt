@@ -372,16 +372,25 @@ object Calculator {
                     TokenType.BINOP -> {
                         val right = values.removeFirst().setScale(2, RoundingMode.HALF_UP)
                         val left = values.removeFirst().setScale(2, RoundingMode.HALF_UP)
-                        val result = when (token.operatorValue) {
-                            "x", "*" -> left.multiply(right)
-                            "/" -> left.divide(right, RoundingMode.HALF_UP)
-                            "+" -> left.add(right)
-                            "-" -> left.subtract(right)
-                            else -> throw CalculatorException(
-                                "Unknown operation ${token.operatorValue}",
+                        var result: BigDecimal = BigDecimal.ZERO
+                        try {
+                            result = when (token.operatorValue) {
+                                "x", "*" -> left.multiply(right)
+                                "/" -> left.divide(right, RoundingMode.HALF_UP)
+                                "+" -> left.add(right)
+                                "-" -> left.subtract(right)
+                                else -> throw CalculatorException(
+                                    "Unknown operation ${token.operatorValue}",
+                                    token.tokenStart,
+                                    token.tokenLength
+                                )
+                            }
+                        } catch (e: ArithmeticException) {
+                            log.error("error evaluating expression: ", CalculatorException(
+                                "invalid operation (did you devide by zero?)",
                                 token.tokenStart,
                                 token.tokenLength
-                            )
+                            ))
                         }
                         values.addFirst(result.setScale(2, RoundingMode.HALF_UP))
                     }

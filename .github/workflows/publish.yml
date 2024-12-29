@@ -62,7 +62,7 @@ jobs:
             
           name: ${{ env.RELEASE_NAME }}                             
           version: ${{ env.VERSION }}
-          version-type: beta                                      
+          version-type: release
           loaders: fabric
           game-versions: ${{ env.MINECRAFT_VERSION }}
           

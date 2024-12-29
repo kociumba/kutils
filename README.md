@@ -55,11 +55,16 @@ Implemented features:
 - remove block breaking particles (may boost performance, because it fully disables them instead of hiding them)
 - fullbright using high gamma
 - remove F5 "selfie" camera
+- historical item price graphs like in [NotEnoughUpdates](https://github.com/NotEnoughUpdates/NotEnoughUpdates),
+    to open the graph, click on any item in the bazaar ui.
+- image previews in chat, when hovering over an image
+
+> [!NOTE]
+> Since v0.0.3 any imgui windows from kutils, will save there size, position etc. and restore
+> them on next launch.
 
 Basically done features 🤷:
 - in game calculator with simple controls (just some ui adjustments left)
-- historical item price graphs like in [NotEnoughUpdates](https://github.com/NotEnoughUpdates/NotEnoughUpdates),
-    to open the graph, click on any item in the bazaar ui.
 
 Features with weird issues 💀:
 - in game implementation of [Skydriver](https://www.github.com/kociumba/Skydriver) (my cli bazaar data app)
@@ -111,6 +116,11 @@ Most windows can also be docked to each other and collapsed.
 <div style="display: flex; justify-content: space-between;">
     <img src="https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/img_1.png" width="49%" alt="price graphs">
     <img src="https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/bazaarUI opacity.png" width="49%" alt="ui opacity">
+</div>
+<div style="display: flex; justify-content: space-between;">
+    <img src="https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/img_2.png" width="49%" alt="price graphs">
+
+[//]: # (    <img src="https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/bazaarUI opacity.png" width="49%" alt="ui opacity">)
 </div>
 
 ## Known issues
