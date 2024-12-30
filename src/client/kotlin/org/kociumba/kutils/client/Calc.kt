@@ -13,25 +13,19 @@ import gg.essential.elementa.constraints.SiblingConstraint
 import gg.essential.elementa.dsl.*
 import gg.essential.elementa.state.BasicState
 import gg.essential.universal.UDesktop
-import gg.essential.universal.UMinecraft
-import gg.essential.universal.utils.MCMinecraft
 import imgui.ImGui
-import imgui.flag.ImGuiCond
-import imgui.flag.ImGuiInputTextFlags
-import imgui.flag.ImGuiKey
 import imgui.flag.ImGuiWindowFlags
 import imgui.type.ImString
 import net.minecraft.client.MinecraftClient
-import net.minecraft.client.input.KeyCodes
-import org.kociumba.kutils.client.imgui.ImGuiKutilsTheme
 import org.kociumba.kutils.client.imgui.ImGuiKutilsTransparentTheme
-import java.awt.Color
 import org.kociumba.kutils.log
 import xyz.breadloaf.imguimc.Imguimc
 import xyz.breadloaf.imguimc.interfaces.Renderable
 import xyz.breadloaf.imguimc.interfaces.Theme
+import java.awt.Color
 import java.math.BigDecimal
 import java.math.RoundingMode
+import kotlin.Throws
 
 // migrate this to imgui now that we have it working
 /**
@@ -129,7 +123,9 @@ object ImCalcUI : Renderable {
     }
 
     /**
-     * TODO: Need some way of forcing mouse and keyboard focus on this
+     * TODO: overhaul the calculator (not up to the standard of the other uis)
+     *  labels: enhancement
+     *
      * > Turns out I don't need a mixin for this, but the input focus is very aggressive, so maby add a setting to disable it ?
      */
     override fun render() {

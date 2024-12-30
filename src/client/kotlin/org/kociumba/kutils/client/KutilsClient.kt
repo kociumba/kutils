@@ -19,11 +19,11 @@ import org.kociumba.kutils.client.chat.ChatImageUI
 import org.kociumba.kutils.client.chat.registerChatMessageHandler
 import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.performanceHud
-import org.kociumba.kutils.client.testingGUI.testingGUI
 import org.kociumba.kutils.log
 import org.lwjgl.glfw.GLFW
 import xyz.breadloaf.imguimc.Imguimc
-import xyz.breadloaf.imguimc.imguiInternal.*
+import xyz.breadloaf.imguimc.imguiInternal.ImguiLoader
+import xyz.breadloaf.imguimc.imguiInternal.InitCallback
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 
@@ -168,7 +168,8 @@ class KutilsClient : ClientModInitializer {
         }
 
         /**
-         * TODO: actually find a font that looks good and is free to distribute with the mod xd
+         * TODO: actually find a font that works here.
+         *  labels: imgui issue
          */
         var fontLoader = InitCallback { io: ImGuiIO, fontAtlas: ImFontAtlas, fontConfig: ImFontConfig ->
             // loads custom font

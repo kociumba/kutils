@@ -82,7 +82,7 @@ fun colorToHexWithAlpha(color: Color): String {
  * utils for sizing and positioning imgui windows using the coordinates and size of the minecraft window
  * instead of the whole monitor minecraft is displaying on
  *
- * TODO: needs more work couse in theory it's fine but does not work
+ * FOR LATER: needs more work couse in theory it's fine but does not work
  */
 fun getRelativeX(x: Float): Float {
     return x - UMinecraft.getMinecraft().window.x

@@ -2,7 +2,6 @@ package org.kociumba.kutils.client.bazaar
 
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
-import org.kociumba.kutils.log
 import kotlin.math.sign
 
 /**
@@ -10,6 +9,8 @@ import kotlin.math.sign
   */
 @Environment(EnvType.CLIENT)
 object BazaarMath {
+    // TODO: add weight settings to the user config
+    //  labels: enhancement
     private val w1 = 0.1428571429 // Weight for Price Spread
     private val w2 = 0.1428571429 // Weight for Volume Imbalance
     private val w3 = 0.1428571429 // Weight for Order Imbalance
@@ -88,7 +89,6 @@ object BazaarSmoothing {
     }
 
     // ApplySmoothing applies the selected smoothing function
-    // TODO: adjust steepness based on observed data
     fun ApplySmoothing(x: Double, smoothingType: SmoothingTypes): Double {
         return when (smoothingType) {
             SmoothingTypes.SIGMOID -> SigmoidSmooth(x, 0.1)

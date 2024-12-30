@@ -5,12 +5,10 @@ import imgui.flag.ImGuiCond
 import imgui.flag.ImGuiWindowFlags
 import net.minecraft.client.MinecraftClient
 import org.kociumba.kutils.client.c
-import org.kociumba.kutils.client.imgui.ImGuiKutilsTheme
 import org.kociumba.kutils.client.imgui.ImGuiKutilsTransparentTheme
 import org.kociumba.kutils.client.imgui.coloredText
 import xyz.breadloaf.imguimc.interfaces.Renderable
 import xyz.breadloaf.imguimc.interfaces.Theme
-import kotlin.or
 
 /**
  * Turns out you can just disable all features of an imgui window,

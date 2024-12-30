@@ -1,6 +1,5 @@
 package org.kociumba.kutils.client.events
 
-import net.minecraft.text.OrderedText
 import net.minecraft.text.Text
 
 data class GetMessageAtEvent(

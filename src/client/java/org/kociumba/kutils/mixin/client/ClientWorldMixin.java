@@ -10,7 +10,6 @@ import net.minecraft.world.World;
 import java.util.function.Supplier;
 import net.minecraft.world.dimension.DimensionType;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 
 import static org.kociumba.kutils.client.KutilsClientKt.getC;
 

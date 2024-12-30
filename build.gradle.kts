@@ -83,9 +83,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
-//    modImplementation("io.wispforest:owo-lib:${project.property("owo_version")}")
-//    include("io.wispforest:owo-sentinel:${project.property("owo_version")}")
-
     // would be cool to be able to include it in jar couse of fucked up versioning
     // if not we have to declare dependency on version down like this: "imguimc": "1.21.1-1.0.7"
     //  which sucks couse the new one has debug tools

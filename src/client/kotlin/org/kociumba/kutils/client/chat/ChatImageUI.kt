@@ -232,6 +232,7 @@ object ChatImageUI : Renderable {
                     }
 
                     // TODO: unfuck the error handling here
+                    //  labels: bug
                     LoadingState.ERROR -> {
                         errorPopup(img)
                     }

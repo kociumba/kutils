@@ -5,7 +5,6 @@ import kotlinx.serialization.json.Json
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import org.kociumba.kutils.client.httpClient.Http
-import org.kociumba.kutils.log
 
 @Serializable
 data class Bazaar(

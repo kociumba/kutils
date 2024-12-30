@@ -1,13 +1,10 @@
 package org.kociumba.kutils.client.chat
 
-import net.fabricmc.fabric.api.message.v1.ServerMessageEvents
-import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.hud.ChatHud
 import net.minecraft.client.gui.hud.ChatHudLine
 import org.kociumba.kutils.client.chatHud
 import org.kociumba.kutils.client.events.ChatMessageEvent
 import org.kociumba.kutils.mixin.client.ChatHudAccessor
-import org.kociumba.kutils.log
 
 val ChatHud.messages: MutableList<ChatHudLine>
     get() = (this as ChatHudAccessor).getMessages_kutils()
