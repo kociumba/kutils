@@ -83,17 +83,32 @@ class ImImage : AutoCloseable {
     private val client: MinecraftClient = MinecraftClient.getInstance()
     private val scope = CoroutineScope(Dispatchers.IO + Job())
 
+
+    /**
+     * used to handle error since the ERROR state did not seem to work before
+     */
+    private fun handleError(message: String, e: Exception) {
+        log.error(message, e)
+        this.loadingState = LoadingState.ERROR
+        this.errorMessage = e.message ?: "Unknown error"
+    }
+
     private fun convertToPng(input: InputStream): ByteArrayInputStream {
         return try {
             input.use { stream ->
-                val originalImage: BufferedImage = ImageIO.read(stream)
-                ByteArrayOutputStream().use { outputStream ->
-                    ImageIO.write(originalImage, "png", outputStream)
-                    ByteArrayInputStream(outputStream.toByteArray())
+                try {
+                    val originalImage: BufferedImage = ImageIO.read(stream)
+                    ByteArrayOutputStream().use { outputStream ->
+                        ImageIO.write(originalImage, "png", outputStream)
+                        ByteArrayInputStream(outputStream.toByteArray())
+                    }
+                } catch (e: Exception) {
+                    handleError("Failed to convert image to png", e)
+                    ByteArrayInputStream(byteArrayOf())
                 }
             }
         } catch (e: Exception) {
-            log.error("Failed to convert image to png", e)
+            handleError("Failed to convert image to png", e)
             this.loadingState = LoadingState.ERROR
             this.errorMessage = e.message ?: "Unknown error"
             ByteArrayInputStream(byteArrayOf())
@@ -132,7 +147,7 @@ class ImImage : AutoCloseable {
                 }
             }
         } catch (e: Exception) {
-            log.error("Failed to load image from path $path", e)
+            handleError("Failed to load image from path $path", e)
             this.loadingState = LoadingState.ERROR
             this.errorMessage = e.message ?: "Unknown error"
             return this
@@ -147,29 +162,30 @@ class ImImage : AutoCloseable {
         this.loadingState = LoadingState.LOADING
         this.errorMessage = ""
 
-        var r: ImImage? = null
         scope.launch {
             try {
                 val bytes: ByteArray = URI(url).toURL().readBytes()
 
                 client.submitAndJoin {
-                    ByteArrayInputStream(bytes).use { stream ->
-                        NativeImage.read(convertToPng(stream)).use { image ->
-                            r = loadFromNativeImage(image)
-                            loadingState = LoadingState.LOADED
-                            onComplete?.invoke(true)
+                    try {
+                        ByteArrayInputStream(bytes).use { stream ->
+                            NativeImage.read(convertToPng(stream)).use { image ->
+                                loadFromNativeImage(image)
+                                loadingState = LoadingState.LOADED
+                                onComplete?.invoke(true)
+                            }
                         }
+                    } catch (e: Exception) {
+                        handleError("Failed to process image from url $url", e)
+                        onComplete?.invoke(false)
                     }
                 }
             } catch (e: Exception) {
-                log.error("Failed to load image from url $url", e)
-                loadingState = LoadingState.ERROR
-                errorMessage = e.message ?: "Unknown error"
-                r = this@ImImage
+                handleError("Failed to load image from url $url", e)
                 onComplete?.invoke(false)
             }
         }
-        return r ?: this
+        return this
     }
 
     fun loadSVGFromURL(url: String): ImImage {
@@ -178,16 +194,30 @@ class ImImage : AutoCloseable {
 
         try {
             val svg = SVGLoader().load(URI(url).toURL())
-            val pngStream = rasterizeSVG(svg!!)
-            NativeImage.read(pngStream).use { image ->
-                return loadFromNativeImage(image)
+            if (svg == null) {
+                handleError("Failed to load SVG from url $url", IllegalStateException("SVG document is null"))
+                return this
+            }
+
+            val pngStream = try {
+                rasterizeSVG(svg)
+            } catch (e: Exception) {
+                handleError("Failed to rasterize SVG from url $url", e)
+                return this
+            }
+
+            try {
+                NativeImage.read(pngStream).use { image ->
+                    loadFromNativeImage(image)
+                    loadingState = LoadingState.LOADED
+                }
+            } catch (e: Exception) {
+                handleError("Failed to process rasterized SVG from url $url", e)
             }
         } catch (e: Exception) {
-            log.error("Failed to load SVG from url $url", e.message)
-            this.loadingState = LoadingState.ERROR
-            this.errorMessage = e.message ?: "Unknown error"
-            return this
+            handleError("Failed to load SVG from url $url", e)
         }
+        return this
     }
 
     fun loadSVGFromFile(path: String): ImImage {
@@ -203,7 +233,7 @@ class ImImage : AutoCloseable {
                 }
             }
         } catch (e: Exception) {
-            log.error("Failed to load SVG from path $path", e.message)
+            handleError("Failed to load SVG from path $path", e)
             this.loadingState = LoadingState.ERROR
             this.errorMessage = e.message ?: "Unknown error"
             return this
@@ -216,20 +246,25 @@ class ImImage : AutoCloseable {
     }
 
     private fun loadFromNativeImage(image: NativeImage): ImImage {
-        destroyTexture() // Clean up any existing texture
+        try {
+            destroyTexture() // Clean up any existing texture
 
-        this.width = image.width
-        this.height = image.height
+            this.width = image.width
+            this.height = image.height
 
-        val texture = NativeImageBackedTexture(image)
-        val txID = client.textureManager.registerDynamicTexture(this.generateUniquePrefix(), texture)
-        client.textureManager.bindTexture(txID)
-        this.abstractTexture = client.textureManager.getTexture(txID)
-            ?: throw IllegalStateException("Failed to get texture from texture manager")
-        this.glID = this.abstractTexture?.glId ?: -1
+            val texture = NativeImageBackedTexture(image)
+            val txID = client.textureManager.registerDynamicTexture(this.generateUniquePrefix(), texture)
+            client.textureManager.bindTexture(txID)
+            this.abstractTexture = client.textureManager.getTexture(txID)
+                ?: throw IllegalStateException("Failed to get texture from texture manager")
+            this.glID = this.abstractTexture?.glId ?: -1
 
-        this.loadingState = LoadingState.LOADED
-        return this
+            this.loadingState = LoadingState.LOADED
+            return this
+        } catch (e: Exception) {
+            handleError("Failed to load native image", e)
+            return this
+        }
     }
 
     /**

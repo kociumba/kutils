@@ -296,7 +296,7 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
                 "https://github.com/kociumba/kutils/issues (clickable link)"
             )
             if (ImGui.isItemClicked()) {
-                val url = URI("https://github.com/kociumba/kutils/issues")
+                val url = URI("https://github.com/kociumba/kutils/issues/new/choose")
                 try {
                     Util.getOperatingSystem().open(url) // minecraft does some weird stuff
                 } catch (e: Exception) {

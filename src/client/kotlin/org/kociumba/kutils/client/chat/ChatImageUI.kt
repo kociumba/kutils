@@ -3,6 +3,7 @@ package org.kociumba.kutils.client.chat
 import imgui.ImGui
 import imgui.flag.ImGuiCol
 import imgui.flag.ImGuiCond
+import imgui.flag.ImGuiPopupFlags
 import imgui.flag.ImGuiWindowFlags
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents
 import net.minecraft.client.gui.screen.ChatScreen
@@ -82,8 +83,17 @@ object ChatImageUI : Renderable {
         width: Float,
         height: Float
     ): Pair<Float, Float> {
-        val x = mouseX.coerceIn(0f, client.window.width - width)
-        val y = (mouseY - height).coerceIn(0f, client.window.height - height) // Subtract height to position bottom-left at mouse
+        var x = 0f
+        var y = 0f
+        try {
+            x = mouseX.coerceIn(0f, client.window.width - width)
+            y = (mouseY - height).coerceIn(
+                0f,
+                client.window.height - height
+            ) // Subtract height to position bottom-left at mouse
+        } catch (e: Exception) {
+            log.error("Failed to calculate position for image preview", e)
+        }
         return Pair(x, y)
     }
 
@@ -99,51 +109,10 @@ object ChatImageUI : Renderable {
             image.loadImageFromURL(url) { success ->
                 if (!success) {
                     log.error("Failed to load image from url $url")
-                    imageCache.remove(url)
+//                    imageCache.remove(url)
                 }
             }
         }
-    }
-
-    /**
-     * copy of the @BazaarUI error popup, adapted for this
-     */
-    fun errorPopup(e: ImImage) {
-        val warn = hexToImColor("#f5c6c6")
-        val link = hexToImColor("#8200ff")
-
-        ImGui.pushStyleColor(ImGuiCol.PopupBg, warn.r, warn.g, warn.b, warn.a)
-        ImGui.pushStyleColor(ImGuiCol.Text, 0f, 0f, 0f, 1f)
-        ImGui.openPopup("##errorPopup")
-        if (ImGui.beginPopup("##errorPopup")) {
-            ImGui.text("${e.errorMessage}\nPlease report this here:")
-//            ImGui.sameLine()
-            ImGui.textColored(
-                link.r,
-                link.g,
-                link.b,
-                link.a,
-                "https://github.com/kociumba/kutils/issues (clickable link)"
-            )
-            if (ImGui.isItemClicked()) {
-                val url = URI("https://github.com/kociumba/kutils/issues")
-                try {
-                    Util.getOperatingSystem().open(url) // minecraft does some weird stuff
-                } catch (e: Exception) {
-                    log.error("Failed to open the github issues page $e")
-                }
-            }
-
-            ImGui.pushStyleColor(ImGuiCol.Text, 1f, 1f, 1f, 1f)
-            if (ImGui.button("Close")) {
-                bazaarUI.error = null // reset
-                ImGui.closeCurrentPopup()
-            }
-            ImGui.popStyleColor()
-            ImGui.endPopup()
-        }
-        ImGui.popStyleColor()
-        ImGui.popStyleColor()
     }
 
     override fun render() {
@@ -154,8 +123,8 @@ object ChatImageUI : Renderable {
         )
 
         ImGui.setNextWindowSize(
-            client.window.width.toFloat(),
-            client.window.height.toFloat(),
+            client.window.framebufferWidth.toFloat(),
+            client.window.framebufferHeight.toFloat(),
             ImGuiCond.Always
         )
 
@@ -199,20 +168,30 @@ object ChatImageUI : Renderable {
 
                     LoadingState.LOADED -> {
                         if (img.isValid) {
-                            val maxWidth = client.window.width * 0.5f
-                            val maxHeight = client.window.height * 0.5f
+                            // First calculate the maximum available space
+                            val maxWidth = client.window.width * 0.5f  // Keep 50% limit
+                            val maxHeight = client.window.height * 0.5f // Keep 50% limit
+
+                            // Ensure max dimensions never exceed window size
+                            val safeMaxWidth = minOf(maxWidth, client.window.width.toFloat())
+                            val safeMaxHeight = minOf(maxHeight, client.window.height.toFloat())
+
+                            // Calculate scale while ensuring the image fits in the window
                             val scale = minOf(
                                 1f,
-                                maxWidth / img.width,
-                                maxHeight / img.height
+                                safeMaxWidth / img.width,
+                                safeMaxHeight / img.height
                             )
 
                             val finalWidth = img.width * scale
                             val finalHeight = img.height * scale
 
-                            val (x, y) = calculatePositionNextToMouse(mouseX, mouseY, finalWidth, finalHeight)
+                            // Double-check that our final dimensions don't exceed window size
+                            val displayWidth = minOf(finalWidth, client.window.width.toFloat())
+                            val displayHeight = minOf(finalHeight, client.window.height.toFloat())
 
-                            // offset the image a bit from the mouse
+                            val (x, y) = calculatePositionNextToMouse(mouseX, mouseY, displayWidth, displayHeight)
+
                             ImGui.setCursorPos(x + 10, y - 10)
 //                            ImGui.setNextWindowPos(x, y, ImGuiCond.Always)
 
@@ -231,10 +210,31 @@ object ChatImageUI : Renderable {
                         }
                     }
 
-                    // TODO: unfuck the error handling here
-                    //  labels: bug
+                    // done error handling works now
                     LoadingState.ERROR -> {
-                        errorPopup(img)
+                        val mouseX = client.mouse.x.toFloat()
+                        val mouseY = client.mouse.y.toFloat()
+
+                        val errorText = "Failed to load image: ${img.errorMessage}"
+                        val textSize = ImGui.calcTextSize(errorText)
+                        val padding = 8f
+
+                        val (x, y) = calculatePositionNextToMouse(
+                            mouseX,
+                            mouseY,
+                            textSize.x + padding * 2,
+                            textSize.y + padding * 2
+                        )
+
+                        // Draw error background
+                        ImGui.setCursorPos(x + 10, y - 10)
+                        ImGui.pushStyleColor(ImGuiCol.ChildBg, 0.8f, 0.2f, 0.2f, 0.95f)
+                        ImGui.beginChild("##errorMsg", textSize.x + padding * 2, textSize.y + padding * 2, true)
+                        ImGui.pushStyleColor(ImGuiCol.Text, 1f, 1f, 1f, 1f)
+                        ImGui.setCursorPos(padding, padding)
+                        ImGui.text(errorText)
+                        ImGui.popStyleColor(2)
+                        ImGui.endChild()
                     }
 
                     else -> {} // Handle IDLE state

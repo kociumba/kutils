@@ -122,10 +122,9 @@ object ImCalcUI : Renderable {
         return ImGuiKutilsTransparentTheme()
     }
 
+    // TODO: overhaul the calculator (not up to the standard of the other uis)
+    //  labels: enhancement
     /**
-     * TODO: overhaul the calculator (not up to the standard of the other uis)
-     *  labels: enhancement
-     *
      * > Turns out I don't need a mixin for this, but the input focus is very aggressive, so maby add a setting to disable it ?
      */
     override fun render() {

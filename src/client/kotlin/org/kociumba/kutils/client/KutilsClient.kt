@@ -167,10 +167,8 @@ class KutilsClient : ClientModInitializer {
             log.info("font extracted to $fontPath")
         }
 
-        /**
-         * TODO: actually find a font that works here.
-         *  labels: imgui issue
-         */
+        // TODO: actually find a font that works here.
+        //  labels: imgui issue
         var fontLoader = InitCallback { io: ImGuiIO, fontAtlas: ImFontAtlas, fontConfig: ImFontConfig ->
             // loads custom font
             fontConfig.oversampleH = 16
