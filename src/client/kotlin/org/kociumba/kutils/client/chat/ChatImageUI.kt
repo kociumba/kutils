@@ -31,7 +31,7 @@ object ChatImageUI : Renderable {
     private val imageCache = ConcurrentHashMap<String, ImImage>()
 
     // Configuration
-    private val imageExtensions = listOf("jpg", "png", "gif", "jpeg", "svg")
+    private val imageExtensions = listOf("jpg", "png", "gif", "jpeg", "webp", "svg")
     private val urlRegex = "https://[^. ]+\\.[^ ]+(\\.?( |$))".toRegex()
 
     fun initialize() {
