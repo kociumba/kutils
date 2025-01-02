@@ -14,6 +14,7 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.hud.ChatHud
 import net.minecraft.client.option.KeyBinding
 import net.minecraft.client.util.InputUtil
+import org.kociumba.kutils.client.bazaar.WeightEdit
 import org.kociumba.kutils.client.bazaar.bazaarUI
 import org.kociumba.kutils.client.chat.ChatImageUI
 import org.kociumba.kutils.client.chat.registerChatMessageHandler
@@ -191,6 +192,15 @@ class KutilsClient : ClientModInitializer {
             Imguimc.pushRenderable(ChatImageUI)
             ChatImageUI.initialize()
         }
+
+
+        WeightEdit.loadWeights()
+        log.info("prediction weights loaded")
+
+        Runtime.getRuntime().addShutdownHook(Thread {
+            WeightEdit.saveWeights()
+            log.info("prediction weights saved")
+        })
 
         log.info("kutils initial setup done")
     }

@@ -14,6 +14,7 @@ import org.kociumba.kutils.client.hud.performanceHud
 import xyz.breadloaf.imguimc.Imguimc
 import java.awt.Color
 import java.io.File
+import org.kociumba.kutils.client.bazaar.WeightEdit
 
 /**
  * The best color presets I could think of
@@ -384,6 +385,19 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     )
     var shouldPreviewChatImages: Boolean = true
 
+    @Property(
+        type = PropertyType.BUTTON,
+        name = "edit prediction weights",
+        description = "edit the weights of the prediction model",
+        category = "gui",
+        subcategory = "internal",
+    )
+    fun editWeights() {
+        if (WeightEdit.rendered) return
+        Imguimc.pushRenderable(WeightEdit)
+    }
+
+
     init {
         initialize()
 
@@ -476,6 +490,12 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
             "rendering",
             "world",
             "options related to world client side rendering and properties"
+        )
+
+        setSubcategoryDescription(
+            "gui",
+            "internal",
+            "edit the prediction weights for bazaar ui, they should always add up roughly to 1"
         )
     }
 }

@@ -228,13 +228,15 @@ object ChatImageUI : Renderable {
 
                         // Draw error background
                         ImGui.setCursorPos(x + 10, y - 10)
-                        ImGui.pushStyleColor(ImGuiCol.ChildBg, 0.8f, 0.2f, 0.2f, 0.95f)
-                        ImGui.beginChild("##errorMsg", textSize.x + padding * 2, textSize.y + padding * 2, true)
-                        ImGui.pushStyleColor(ImGuiCol.Text, 1f, 1f, 1f, 1f)
-                        ImGui.setCursorPos(padding, padding)
-                        ImGui.text(errorText)
-                        ImGui.popStyleColor(2)
-                        ImGui.endChild()
+                        if (client.currentScreen is ChatScreen) {
+                            ImGui.pushStyleColor(ImGuiCol.ChildBg, 0.8f, 0.2f, 0.2f, 0.95f)
+                            ImGui.beginChild("##errorMsg", textSize.x + padding * 2, textSize.y + padding * 2, true)
+                            ImGui.pushStyleColor(ImGuiCol.Text, 1f, 1f, 1f, 1f)
+                            ImGui.setCursorPos(padding, padding)
+                            ImGui.text(errorText)
+                            ImGui.popStyleColor(2)
+                            ImGui.endChild()
+                        }
                     }
 
                     else -> {} // Handle IDLE state
