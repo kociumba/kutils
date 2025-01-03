@@ -1,10 +1,12 @@
 package org.kociumba.kutils.client.bazaar
 
 import imgui.ImGui
+import imgui.flag.ImGuiWindowFlags
 import imgui.type.ImFloat
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
 import org.kociumba.kutils.client.imgui.ImGuiKutilsTheme
+import org.kociumba.kutils.client.imgui.spinner
 import xyz.breadloaf.imguimc.Imguimc
 import xyz.breadloaf.imguimc.interfaces.Renderable
 import xyz.breadloaf.imguimc.interfaces.Theme
@@ -63,7 +65,7 @@ object WeightEdit : Renderable {
     }
 
     override fun render() {
-        ImGui.begin(name)
+        ImGui.begin(name, ImGuiWindowFlags.NoDocking or ImGuiWindowFlags.NoCollapse or ImGuiWindowFlags.AlwaysAutoResize)
 
         allWeights.forEach { (name, weight) ->
             ImGui.inputFloat(name, weight)
@@ -73,17 +75,23 @@ object WeightEdit : Renderable {
         val isValid = abs(sum - 1.0) < 0.0001
 
         ImGui.spacing()
-        ImGui.text("Sum of weights: ${"%.4f".format(sum)}")
 
         if (!isValid) {
-            ImGui.textColored(1f, 0f, 0f, 1f, "Warning: Weights must sum to 1.0")
+            ImGui.textColored(1f, 0f, 0f, 1f, "Warning: Normalizing weights to sum to 1.0")
+            ImGui.sameLine()
+            val textHeight = ImGui.getFrameHeight()
+            val radius = textHeight / 2 - 1f
+            val thickness = textHeight / 7f
+            spinner("##s", radius, thickness, ImGui.getColorU32(1f, 1f, 1f, 1f))
+        } else {
+            ImGui.text("Sum of weights: ${"%.4f".format(sum)}")
         }
 
         ImGui.spacing()
-        if (ImGui.button("Normalize")) {
-            normalizeWeights()
-            saveWeights()
-        }
+//        if (ImGui.button("Normalize")) {
+//            normalizeWeights()
+//            saveWeights()
+//        }
 
         ImGui.sameLine()
         if (ImGui.button("Reset")) {
@@ -99,14 +107,60 @@ object WeightEdit : Renderable {
             rendered = false
         }
 
+        if (ImGui.isWindowFocused()) {
+            normalizeWeights()
+        }
+
         ImGui.end()
     }
 
+    /**
+     * percentage scaling
+     */
     private fun normalizeWeights() {
-        val sum = allWeights.sumOf { it.second.get().toDouble() }
-        if (sum > 0) {
+        // Get current total
+        val total = allWeights.sumOf { it.second.get().toDouble() }
+        if (total <= 0) return
+
+        // For each weight that's set above 1.0, cap it at 1.0
+        allWeights.forEach { (_, weight) ->
+            if (weight.get() > 1f) weight.set(1f)
+        }
+
+        // Calculate how much weight is left to distribute
+        val primaryWeights = allWeights.map { it.second.get() }
+        val remainingWeight = (1.0 - primaryWeights.sum()).toFloat()
+
+        if (remainingWeight > 0) {
+            // Get sum of weights that are less than their input value
+            val smallWeightsSum = primaryWeights.filter { it < 1f }.sum()
+
+            if (smallWeightsSum > 0) {
+                // Distribute remaining weight proportionally
+                allWeights.forEach { (_, weight) ->
+                    val currentWeight = weight.get()
+                    if (currentWeight < 1f) {
+                        val proportion = currentWeight / smallWeightsSum
+                        weight.set(currentWeight + (remainingWeight * proportion))
+                    }
+                }
+            } else {
+                // If all weights are 1.0, distribute remaining equally
+                val equalShare = remainingWeight / allWeights.size
+                allWeights.forEach { (_, weight) ->
+                    weight.set(weight.get() + equalShare)
+                }
+            }
+        } else if (remainingWeight < 0) {
+            // If sum > 1, scale down proportionally everything except 1.0 values
+            val scaleDown = (1.0f - primaryWeights.filter { it >= 1f }.sum()) /
+                    primaryWeights.filter { it < 1f }.sum()
+
             allWeights.forEach { (_, weight) ->
-                weight.set((weight.get() / sum).toFloat())
+                val currentWeight = weight.get()
+                if (currentWeight < 1f) {
+                    weight.set(currentWeight * scaleDown)
+                }
             }
         }
     }

@@ -391,12 +391,19 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         description = "edit the weights of the prediction model",
         category = "gui",
         subcategory = "internal",
+        placeholder = "open editor",
     )
     fun editWeights() {
-        if (WeightEdit.rendered) return
-        Imguimc.pushRenderable(WeightEdit)
+        if (!WeightEdit.rendered) {
+            WeightEdit.loadWeights()
+            WeightEdit.rendered = true
+            Imguimc.pushRenderable(WeightEdit)
+        } else {
+            Imguimc.pullRenderable(WeightEdit)
+            WeightEdit.rendered = false
+            WeightEdit.saveWeights()
+        }
     }
-
 
     init {
         initialize()
