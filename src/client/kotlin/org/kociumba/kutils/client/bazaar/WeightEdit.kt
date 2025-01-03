@@ -26,6 +26,12 @@ private data class WeightsData(
     val profitMarginFactor: Float = 0.1428571429f
 )
 
+data class Weight(
+    val name: String,
+    val weight: ImFloat,
+    var isDisabled: Boolean
+)
+
 object WeightEdit : Renderable {
     override fun getName(): String? {
         return "WeightEditor"
@@ -47,16 +53,16 @@ object WeightEdit : Renderable {
     var profitMarginFactorWeight = ImFloat(0.1428571429f)
 
     private val allWeights = listOf(
-        "Price Spread" to priceSpreadWeight,
-        "Volume Imbalance" to volumeImbalanceWeight,
-        "Order Imbalance" to orderImbalanceWeight,
-        "Moving Week Trend" to movingWeekTrendWeight,
-        "Top Order Book Pressure" to topOrderBookPressureWeight,
-        "Volume Factor" to volumeFactorWeight,
-        "Profit Margin Factor" to profitMarginFactorWeight
+        Weight("Price Spread", priceSpreadWeight, false),
+        Weight("Volume Imbalance", volumeImbalanceWeight, true),
+        Weight("Order Imbalance", orderImbalanceWeight, false),
+        Weight("Moving Week Trend", movingWeekTrendWeight, false),
+        Weight("Top Order Book Pressure", topOrderBookPressureWeight, true),
+        Weight("Volume Factor", volumeFactorWeight, false),
+        Weight("Profit Margin Factor", profitMarginFactorWeight, false)
     )
 
-    val validatedWeights get() = allWeights.map { it.second.get() }
+    val validatedWeights get() = allWeights.map { it.weight.get() }
 
     private val configPath: Path = Path("config/kutils/prediction-weights.json")
     private val json = Json {
@@ -67,11 +73,21 @@ object WeightEdit : Renderable {
     override fun render() {
         ImGui.begin(name, ImGuiWindowFlags.NoDocking or ImGuiWindowFlags.NoCollapse or ImGuiWindowFlags.AlwaysAutoResize)
 
-        allWeights.forEach { (name, weight) ->
-            ImGui.inputFloat(name, weight)
+        // Check if any weight is exactly 1
+        val activeWeight = allWeights.firstOrNull { it.weight.get() == 1f }
+
+        // Update the disabled state for all weights
+        allWeights.forEach { weight ->
+            weight.isDisabled = activeWeight != null && weight.weight.get() != 1f
         }
 
-        val sum = allWeights.sumOf { it.second.get().toDouble() }
+        allWeights.forEach { (name, weight, isDisabled) ->
+            ImGui.beginDisabled(isDisabled)
+            ImGui.inputFloat(name, weight)
+            ImGui.endDisabled()
+        }
+
+        val sum = allWeights.sumOf { it.weight.get().toDouble() }
         val isValid = abs(sum - 1.0) < 0.0001
 
         ImGui.spacing()
@@ -82,9 +98,11 @@ object WeightEdit : Renderable {
             val textHeight = ImGui.getFrameHeight()
             val radius = textHeight / 2 - 1f
             val thickness = textHeight / 7f
-            spinner("##s", radius, thickness, ImGui.getColorU32(1f, 1f, 1f, 1f))
-        } else {
+            spinner("##s", radius, thickness, ImGui.getColorU32(1f, 0f, 0f, 1f))
+        } else if (activeWeight == null) {
             ImGui.text("Sum of weights: ${"%.4f".format(sum)}")
+        } else {
+            ImGui.textColored(1.0f, 0.647f, 0.0f, 1.0f, "reset the values to reenable all weights")
         }
 
         ImGui.spacing()
@@ -118,17 +136,16 @@ object WeightEdit : Renderable {
      * percentage scaling
      */
     private fun normalizeWeights() {
-        // Get current total
-        val total = allWeights.sumOf { it.second.get().toDouble() }
+        val total = allWeights.sumOf { it.weight.get().toDouble() }
         if (total <= 0) return
 
         // For each weight that's set above 1.0, cap it at 1.0
-        allWeights.forEach { (_, weight) ->
+        allWeights.forEach { (_, weight, _) ->
             if (weight.get() > 1f) weight.set(1f)
         }
 
         // Calculate how much weight is left to distribute
-        val primaryWeights = allWeights.map { it.second.get() }
+        val primaryWeights = allWeights.map { it.weight.get() }
         val remainingWeight = (1.0 - primaryWeights.sum()).toFloat()
 
         if (remainingWeight > 0) {
@@ -166,7 +183,7 @@ object WeightEdit : Renderable {
     }
 
     private fun resetWeights() {
-        allWeights.forEach { (_, weight) ->
+        allWeights.forEach { (_, weight, _) ->
             weight.set(0.1428571429f)
         }
     }

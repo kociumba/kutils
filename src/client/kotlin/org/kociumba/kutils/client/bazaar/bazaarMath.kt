@@ -9,14 +9,6 @@ import kotlin.math.sign
   */
 @Environment(EnvType.CLIENT)
 object BazaarMath {
-//    private val w1 get() = WeightEdit.priceSpreadWeight // Weight for Price Spread
-//    private val w2 get() = WeightEdit.volumeFactorWeight // Weight for Volume Imbalance
-//    private val w3 get() = WeightEdit.orderImbalanceWeight // Weight for Order Imbalance
-//    private val w4 get() = WeightEdit.movingWeekTrendWeight // Weight for Moving Week Trend
-//    private val w5 get() = WeightEdit.topOrderBookPressureWeight // Weight for Top Order Book Pressure
-//    private val w6 get() = WeightEdit.volumeFactorWeight // Weight for Volume Factor
-//    private val w7 get() = WeightEdit.profitMarginFactorWeight // Weight for Profit Margin Factor
-
     data class PredictionResult(val prediction: Double, val confidence: Double)
 
     fun getPrediction(product: Product, s: SmoothingTypes): PredictionResult {
