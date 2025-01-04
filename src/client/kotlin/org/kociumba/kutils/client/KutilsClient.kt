@@ -20,6 +20,8 @@ import org.kociumba.kutils.client.chat.ChatImageUI
 import org.kociumba.kutils.client.chat.registerChatMessageHandler
 import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.performanceHud
+import org.kociumba.kutils.client.notes.NoteData
+import org.kociumba.kutils.client.notes.NotesScreen
 import org.kociumba.kutils.log
 import org.lwjgl.glfw.GLFW
 import xyz.breadloaf.imguimc.Imguimc
@@ -30,7 +32,7 @@ import java.nio.file.StandardCopyOption
 
 var c: ConfigGUI = ConfigGUI()
 var displayingCalc = false
-var displayTest = false
+var displayNotes = false
 var client: MinecraftClient = MinecraftClient.getInstance()
 var chatHud: ChatHud? = null
 
@@ -71,14 +73,14 @@ class KutilsClient : ClientModInitializer {
             )
         )
 
-//        val testingKey: KeyBinding = KeyBindingHelper.registerKeyBinding(
-//            KeyBinding(
-//                "Open testing GUI",
-//                InputUtil.Type.KEYSYM,
-//                GLFW.GLFW_KEY_G,
-//                "kutils"
-//            )
-//        )
+        val notesKey: KeyBinding = KeyBindingHelper.registerKeyBinding(
+            KeyBinding(
+                "Open Notes",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_N,
+                "kutils"
+            )
+        )
 
         // Use once, minimize performance impact
         ClientTickEvents.END_CLIENT_TICK.register { client ->
@@ -106,15 +108,12 @@ class KutilsClient : ClientModInitializer {
                 }
             }
 
-//            while (testingKey.wasPressed()) {
-//                if (!displayTest) {
-//                    displayTest = true
-//                    Imguimc.pushRenderable(testingGUI)
-//                } else {
-//                    displayTest = false
-//                    Imguimc.pullRenderable(testingGUI)
-//                }
-//            }
+            while (notesKey.wasPressed()) {
+                if (client.currentScreen !is NotesScreen) {
+                    NotesScreen.reset()
+                    UScreen.displayScreen(NotesScreen)
+                }
+            }
 
             if (!loadedWindow && c.customWindowTitle != "" && MinecraftClient.getInstance().window != null) {
                 loadedWindow = true
@@ -170,12 +169,12 @@ class KutilsClient : ClientModInitializer {
 
         // TODO: actually find a font that works here.
         //  labels: imgui issue
-        var fontLoader = InitCallback { io: ImGuiIO, fontAtlas: ImFontAtlas, fontConfig: ImFontConfig ->
+        var fontLoader = InitCallback { io: ImGuiIO, fontAtlas: ImFontAtlas, fontConfig: ImFontConfig, glyphRanges: ShortArray  ->
             // loads custom font
             fontConfig.oversampleH = 16
             fontConfig.oversampleV = 16
 //            io.setFontDefault(fontAtlas.addFontFromFileTTF(fontPath.toAbsolutePath().toString(), 16f, fontConfig))
-            fontAtlas.addFontFromFileTTF(fontPath.toAbsolutePath().toString(), 14f, fontConfig)
+            fontAtlas.addFontFromFileTTF(fontPath.toAbsolutePath().toString(), 14f, fontConfig, glyphRanges)
 
             // additional init stuff
             io.fontAllowUserScaling = true
@@ -193,7 +192,6 @@ class KutilsClient : ClientModInitializer {
             ChatImageUI.initialize()
         }
 
-
         WeightEdit.loadWeights()
         log.info("prediction weights loaded")
 
@@ -201,6 +199,13 @@ class KutilsClient : ClientModInitializer {
             WeightEdit.saveWeights()
             log.info("prediction weights saved")
         })
+
+        NoteData.loadNotes()
+        log.info("notes loaded")
+
+//        HudRenderCallback.EVENT.register { drawContext, tickDeltaManager ->
+//            TestOverlay().renderElementaOverlay()
+//        }
 
         log.info("kutils initial setup done")
     }

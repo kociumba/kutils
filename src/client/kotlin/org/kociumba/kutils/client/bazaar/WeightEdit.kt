@@ -106,10 +106,6 @@ object WeightEdit : Renderable {
         }
 
         ImGui.spacing()
-//        if (ImGui.button("Normalize")) {
-//            normalizeWeights()
-//            saveWeights()
-//        }
 
         ImGui.sameLine()
         if (ImGui.button("Reset")) {
@@ -144,16 +140,13 @@ object WeightEdit : Renderable {
             if (weight.get() > 1f) weight.set(1f)
         }
 
-        // Calculate how much weight is left to distribute
         val primaryWeights = allWeights.map { it.weight.get() }
         val remainingWeight = (1.0 - primaryWeights.sum()).toFloat()
 
         if (remainingWeight > 0) {
-            // Get sum of weights that are less than their input value
             val smallWeightsSum = primaryWeights.filter { it < 1f }.sum()
 
             if (smallWeightsSum > 0) {
-                // Distribute remaining weight proportionally
                 allWeights.forEach { (_, weight) ->
                     val currentWeight = weight.get()
                     if (currentWeight < 1f) {
@@ -162,14 +155,12 @@ object WeightEdit : Renderable {
                     }
                 }
             } else {
-                // If all weights are 1.0, distribute remaining equally
                 val equalShare = remainingWeight / allWeights.size
                 allWeights.forEach { (_, weight) ->
                     weight.set(weight.get() + equalShare)
                 }
             }
         } else if (remainingWeight < 0) {
-            // If sum > 1, scale down proportionally everything except 1.0 values
             val scaleDown = (1.0f - primaryWeights.filter { it >= 1f }.sum()) /
                     primaryWeights.filter { it < 1f }.sum()
 

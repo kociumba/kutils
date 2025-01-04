@@ -65,6 +65,7 @@ Implemented features:
 
 Basically done features 🤷:
 - in game calculator with simple controls (just some ui adjustments left)
+- note-taking in game with pinnable custom text
 
 Features with weird issues 💀:
 - in game implementation of [Skydriver](https://www.github.com/kociumba/Skydriver) (my cli bazaar data app)
@@ -77,6 +78,7 @@ WIP features:
 - display other useful stats on the hud
 
 Planned features:
+- [chattriggers](https://www.chattriggers.com/) like scripting with lua / very ambitious, likely not soon
 - any qol or data display features
 - might think of trying something with custom skyblock content
 
@@ -119,8 +121,7 @@ Most windows can also be docked to each other and collapsed.
 </div>
 <div style="display: flex; justify-content: space-between;">
     <img src="https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/img_2.png" width="49%" alt="price graphs">
-
-[//]: # (    <img src="https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/bazaarUI opacity.png" width="49%" alt="ui opacity">)
+    <img src="https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/img_3.png" width="49%" alt="ui opacity">
 </div>
 
 ## Known issues
