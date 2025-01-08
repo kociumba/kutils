@@ -30,9 +30,11 @@ import org.kociumba.kutils.client.chat.ChatImageUI
 import org.kociumba.kutils.client.chat.registerChatMessageHandler
 import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.performanceHud
+import org.kociumba.kutils.client.lua.LuaEditor
 import org.kociumba.kutils.client.lua.LuaHudRenderer
 import org.kociumba.kutils.client.lua.LuaLogger
 import org.kociumba.kutils.client.lua.MainThreadExecutor
+import org.kociumba.kutils.client.lua.ModuleManager
 import org.kociumba.kutils.client.notes.NoteData
 import org.kociumba.kutils.client.notes.NotesScreen
 import org.kociumba.kutils.log
@@ -44,6 +46,7 @@ import xyz.breadloaf.imguimc.imguiInternal.ImguiLoader
 import xyz.breadloaf.imguimc.imguiInternal.InitCallback
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import java.io.File
 
 var c: ConfigGUI = ConfigGUI()
 var displayingCalc = false
@@ -52,7 +55,8 @@ var client: MinecraftClient = MinecraftClient.getInstance()
 var chatHud: ChatHud? = null
 var isOnHypixel = false
 //var loacationPacket: ClientboundLocationPacket? = null
-val LUA_GLOBAL: Globals = JsePlatform.standardGlobals()
+//val LUA_GLOBAL: Globals = JsePlatform.standardGlobals()
+lateinit var scriptManager: ModuleManager
 
 //val mainWindow = UMinecraft.getMinecraft().window
 var largeRoboto: ImFont? = null
@@ -75,7 +79,7 @@ class KutilsClient : ClientModInitializer {
 
         val bazaar: KeyBinding = KeyBindingHelper.registerKeyBinding(
             KeyBinding(
-                "Open bazaar info (experimental WIP)",
+                "Open bazaar info",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_INSERT,
                 "kutils"
@@ -84,7 +88,7 @@ class KutilsClient : ClientModInitializer {
 
         val openCalc: KeyBinding = KeyBindingHelper.registerKeyBinding(
             KeyBinding(
-                "Open Calculator (experimental WIP)",
+                "Open Calculator",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_B,
                 "kutils"
@@ -100,9 +104,9 @@ class KutilsClient : ClientModInitializer {
             )
         )
 
-        val testKey: KeyBinding = KeyBindingHelper.registerKeyBinding(
+        val luaEditorKey: KeyBinding = KeyBindingHelper.registerKeyBinding(
             KeyBinding(
-                "test",
+                "open the lua module editor (WIP)",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_COMMA,
                 "kutils"
@@ -142,11 +146,10 @@ class KutilsClient : ClientModInitializer {
                 }
             }
 
-            while (testKey.wasPressed()) {
-                try {
-                    LUA_GLOBAL.loadfile("config/kutils/lua/test.lua").invoke()
-                } catch (e: Exception) {
-                    log.error("failed execute lua script: ", e)
+            while (luaEditorKey.wasPressed()) {
+                if (client.currentScreen !is LuaEditor) {
+                    LuaEditor.reset()
+                    UScreen.displayScreen(LuaEditor)
                 }
             }
 
@@ -256,14 +259,47 @@ class KutilsClient : ClientModInitializer {
 //            }
 //        }
 
+        // moved to the module manager
         // register everything related to lua
-        LUA_GLOBAL.load(LuaKotlinLib())
-        LUA_GLOBAL.load(LuaKotlinExLib())
-        KutilsClassLoader.register(LUA_GLOBAL, Kutils::class.java.classLoader)
-        LuaLogger.register(LUA_GLOBAL)
-        MainThreadExecutor.register(LUA_GLOBAL, client)
-        LuaHudRenderer.register(LUA_GLOBAL)
-        log.info("lua capabilities loaded")
+//        LUA_GLOBAL.load(LuaKotlinLib())
+//        LUA_GLOBAL.load(LuaKotlinExLib())
+//        KutilsClassLoader.register(LUA_GLOBAL, Kutils::class.java.classLoader)
+//        LuaLogger.register(LUA_GLOBAL)
+//        MainThreadExecutor.register(LUA_GLOBAL, client)
+//        LuaHudRenderer.register(LUA_GLOBAL)
+//        log.info("lua capabilities loaded")
+        scriptManager = ModuleManager(client).apply {
+            // Load scripts from disk
+            loadScripts()
+        }
+        LuaEditor.initialize(scriptManager)
+
+        val scriptsFolder = File("config/kutils/lua/")
+        val typesFolder = File(scriptsFolder, "types")
+
+        // Create necessary directories
+        scriptsFolder.mkdirs()
+        typesFolder.mkdirs()
+
+        // Extract LSP config files from resources
+        try {
+            // Extract .luarc.json
+            javaClass.getResourceAsStream("/lua/configs/.luarc.json")?.use { input ->
+                File(scriptsFolder, ".luarc.json").outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            // Extract type definitions
+            javaClass.getResourceAsStream("/lua/configs/types/kutils.lua")?.use { input ->
+                File(typesFolder, "kutils.lua").outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+        } catch (e: Exception) {
+            log.error("Failed to extract LSP configuration files: ${e.message}")
+        }
+
 
         log.info("kutils initial setup done")
     }

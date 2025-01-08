@@ -11,26 +11,40 @@ import org.luaj.vm2.lib.jse.CoerceJavaToLua
 /**
  * Wrapper for HUD rendering callbacks from Lua
  */
-class LuaHudRenderer : LuaFunction() {
+class LuaHudRenderer(private val scriptId: String? = null) : LuaFunction() {
+    companion object {
+        // Keep track of which script owns which callback
+        private val scriptCallbacks = mutableMapOf<String, Boolean>()
+
+        fun register(globals: Globals, scriptId: String? = null) {
+            globals.set("registerHudRenderer", LuaHudRenderer(scriptId))
+        }
+
+        fun setScriptEnabled(scriptId: String, enabled: Boolean) {
+            scriptCallbacks[scriptId] = enabled
+        }
+
+        fun removeScript(scriptId: String) {
+            scriptCallbacks.remove(scriptId)
+        }
+    }
+
     override fun call(luaCallback: LuaValue): LuaValue {
         if (luaCallback.isfunction()) {
             HudRenderCallback.EVENT.register { drawContext: DrawContext, tickCounter: RenderTickCounter ->
-                try {
-                    luaCallback.checkfunction().call(
-                        CoerceJavaToLua.coerce(drawContext),
-                        CoerceJavaToLua.coerce(tickCounter)
-                    )
-                } catch (e: Exception) {
-                    println("Error in Lua HUD render callback: ${e.message}")
+                // Only execute if script is enabled or if this is a global callback (scriptId == null)
+                if (scriptId == null || scriptCallbacks[scriptId] == true) {
+                    try {
+                        luaCallback.checkfunction().call(
+                            CoerceJavaToLua.coerce(drawContext),
+                            CoerceJavaToLua.coerce(tickCounter)
+                        )
+                    } catch (e: Exception) {
+                        println("Error in Lua HUD render callback${scriptId?.let { " for script $it" } ?: ""}: ${e.message}")
+                    }
                 }
             }
         }
         return NIL
-    }
-
-    companion object {
-        fun register(globals: Globals) {
-            globals.set("registerHudRenderer", LuaHudRenderer())
-        }
     }
 }

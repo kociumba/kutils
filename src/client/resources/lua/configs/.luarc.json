@@ -1,0 +1,15 @@
+{
+  "workspace.library": [
+    "./types"
+  ],
+  "diagnostics.globals": [
+    "createLogger",
+    "requireJVM",
+    "registerHudRenderer",
+    "onDisable",
+    "isEnabled",
+    "runOnMain"
+  ],
+  "runtime.version": "Lua 5.2",
+  "$schema": "https://raw.githubusercontent.com/sumneko/vscode-lua/master/setting/schema.json"
+}
