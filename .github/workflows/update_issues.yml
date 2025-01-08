@@ -11,3 +11,5 @@ jobs:
         uses: "alstr/todo-to-issue-action@v5"
         with:
           CLOSE_ISSUES: "true"
+          AUTO_ASSIGN: "true"
+          ESCAPE: "false"

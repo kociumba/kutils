@@ -12,11 +12,27 @@ import java.io.File
 import org.kociumba.kutils.log
 import org.luaj.vm2.LuaBoolean
 import org.luaj.vm2.LuaValue
+import org.luaj.vm2.Varargs
+import org.luaj.vm2.lib.DebugLib
 import org.luaj.vm2.lib.OneArgFunction
 import org.luaj.vm2.lib.ZeroArgFunction
 
-// TODO: Make sure reloading and disabling works
-//  labels: enhancement
+// thanks to the single stack overflow thread about this
+class CustomDebugLib : DebugLib() {
+    @Volatile
+    var interrupted = false
+
+    override fun onInstruction(pc: Int, v: Varargs?, top: Int) {
+        if (interrupted) {
+            throw ScriptInterruptException()
+        }
+        super.onInstruction(pc, v, top)
+    }
+
+    class ScriptInterruptException : RuntimeException("Script execution interrupted")
+}
+
+// ass good as this is going to get
 class ModuleManager(private val client: MinecraftClient) {
     private val scriptContexts = mutableMapOf<String, ScriptContext>()
     private val scriptMetadata = mutableMapOf<String, LuaScriptMetadata>()
@@ -35,37 +51,43 @@ class ModuleManager(private val client: MinecraftClient) {
     )
 
     inner class ScriptContext(val metadata: LuaScriptMetadata) {
-        val globals: Globals = JsePlatform.standardGlobals()
+        private var debugLib: CustomDebugLib = CustomDebugLib()
+        var globals: Globals? = JsePlatform.debugGlobals().apply {
+            load(debugLib)
+        }
         private var isInitialized = false
 
         fun initialize() {
             if (isInitialized) return
+            debugLib.interrupted = false
 
             try {
-                globals.load(LuaKotlinLib())
-                globals.load(LuaKotlinExLib())
-                KutilsClassLoader.register(globals, Kutils::class.java.classLoader)
-                LuaLogger.register(globals)
-                MainThreadExecutor.register(globals, client)
+                globals?.let { g ->
+                    g.load(LuaKotlinLib())
+                    g.load(LuaKotlinExLib())
+                    KutilsClassLoader.register(g, Kutils::class.java.classLoader)
+                    LuaLogger.register(g)
+                    MainThreadExecutor.register(g, client)
 
-                // Add cleanup callback registration
-                globals.set("onDisable", object : OneArgFunction() {
-                    override fun call(callback: LuaValue): LuaValue {
-                        if (callback.isfunction()) {
-                            metadata.cleanupCallback = callback.checkfunction()
+                    // Add cleanup callback registration
+                    g.set("onDisable", object : OneArgFunction() {
+                        override fun call(callback: LuaValue): LuaValue {
+                            if (callback.isfunction()) {
+                                metadata.cleanupCallback = callback.checkfunction()
+                            }
+                            return NIL
                         }
-                        return NIL
-                    }
-                })
+                    })
 
-                // Add enabled state check
-                globals.set("isEnabled", object : ZeroArgFunction() {
-                    override fun call(): LuaValue = valueOf(metadata.isEnabled)
-                })
+                    // Add enabled state check
+                    g.set("isEnabled", object : ZeroArgFunction() {
+                        override fun call(): LuaValue = valueOf(metadata.isEnabled)
+                    })
 
-                LuaHudRenderer.register(globals, metadata.fileName)
+                    LuaHudRenderer.register(g, metadata.fileName)
 
-                isInitialized = true
+                    isInitialized = true
+                }
             } catch (e: Exception) {
                 log.error("Failed to initialize script context for ${metadata.fileName}: ${e.message}")
             }
@@ -73,15 +95,27 @@ class ModuleManager(private val client: MinecraftClient) {
 
         fun cleanup() {
             try {
-                // Call cleanup callback if registered
-                metadata.cleanupCallback?.call()
+                try {
+                    metadata.cleanupCallback?.call()
+                    debugLib.interrupted = true
+                } catch (e: Exception) {
+                    log.error("Error during cleanup callback of script ${metadata.fileName}: ${e.message}")
+                }
+
+                // Clear all references
+                globals = null
+                isInitialized = false
+
             } catch (e: Exception) {
-                log.error("Error during cleanup of script ${metadata.fileName}: ${e.message}")
+                if (e !is CustomDebugLib.ScriptInterruptException) {
+                    log.error("Error during cleanup of script ${metadata.fileName}: ${e.message}")
+                }
             }
 
             // Remove from HUD renderer
             LuaHudRenderer.removeScript(metadata.fileName)
             metadata.isEnabled = false
+            metadata.cleanupCallback = null
         }
     }
 
@@ -105,7 +139,7 @@ class ModuleManager(private val client: MinecraftClient) {
             scriptContexts[fileName] = context
 
             val scriptFile = File(scriptsFolder, fileName)
-            context.globals.load(scriptFile.reader(), fileName).call()
+            context.globals?.load(scriptFile.reader(), fileName)?.call()
             metadata.isEnabled = true
             LuaHudRenderer.setScriptEnabled(fileName, true)
         } catch (e: Exception) {

@@ -1,5 +1,7 @@
 package org.kociumba.kutils.client
 
+import org.kociumba.kutils.client.lua.CustomDebugLib
+import org.kociumba.kutils.log
 import org.luaj.vm2.Globals
 import org.luaj.vm2.LuaFunction
 import org.luaj.vm2.LuaString
@@ -44,7 +46,13 @@ class KutilsClassLoader(private val modClassLoader: ClassLoader) : LuaFunction()
                 if (cls == Thread::class.java && arg.isfunction()) {
                     val runnable = object : Runnable {
                         override fun run() {
-                            arg.checkfunction().call()
+                            try {
+                                arg.checkfunction().call() // the source of all errors xd
+                            } catch (e: Exception) {
+                                if (e !is CustomDebugLib.ScriptInterruptException) {
+                                    log.error("Error in thread", e)
+                                }
+                            }
                         }
                     }
                     return CoerceJavaToLua.coerce(Thread(runnable))
