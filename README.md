@@ -76,9 +76,9 @@ Features with weird issues 💀:
 WIP features:
 - health/armor/damage hud
 - display other useful stats on the hud
+- [chattriggers](https://www.chattriggers.com/) like scripting with lua / to see the docs go to [kutils docs](https://kociumba.gitbook.io/kutils/)
 
 Planned features:
-- [chattriggers](https://www.chattriggers.com/) like scripting with lua / very ambitious, likely not soon
 - any qol or data display features
 - might think of trying something with custom skyblock content
 
