@@ -48,7 +48,8 @@ repositories {
     maven(url = "https://repo.essential.gg/repository/maven-public")
     maven(url = "https://maven.wispforest.io")
 //    maven(url = "https://repo.alignedcookie88.com/repository/maven-public/")
-//    maven(url = "https://jitpack.io")
+    maven(url = "https://jitpack.io")
+    maven(url = "https://repo.hypixel.net/repository/Hypixel/")
 
     maven {
         url = uri("https://maven.pkg.github.com/kociumba/imgui-mc")
@@ -90,8 +91,11 @@ dependencies {
 
     // using my fork couse the other one is down
     modImplementation(include("xyz.breadloaf.imguimc:imgui-mc:1.21.1-1.0.15")!!)
+//    modImplementation(include("net.hypixel:mod-api:1.0.1")!!)
 
     implementation("com.github.weisj:jsvg:1.6.0")
+
+    implementation("com.github.only52607.luakt:luakt:2.6.1")
 
 }
 

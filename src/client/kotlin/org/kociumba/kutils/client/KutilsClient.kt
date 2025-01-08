@@ -1,5 +1,9 @@
 package org.kociumba.kutils.client
 
+import com.github.only52607.luakt.CoerceKotlinToLua
+import com.github.only52607.luakt.lib.LuaKotlinExLib
+import com.github.only52607.luakt.lib.LuaKotlinLib
+import gg.essential.universal.UChat
 import gg.essential.universal.UScreen
 import gg.essential.universal.utils.MCMinecraft
 import imgui.*
@@ -8,21 +12,32 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
+//import net.hypixel.modapi.HypixelModAPI
+//import net.hypixel.modapi.packet.impl.clientbound.ClientboundHelloPacket
+//import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.hud.ChatHud
 import net.minecraft.client.option.KeyBinding
 import net.minecraft.client.util.InputUtil
+import org.kociumba.kutils.Kutils
 import org.kociumba.kutils.client.bazaar.WeightEdit
 import org.kociumba.kutils.client.bazaar.bazaarUI
 import org.kociumba.kutils.client.chat.ChatImageUI
 import org.kociumba.kutils.client.chat.registerChatMessageHandler
 import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.performanceHud
+import org.kociumba.kutils.client.lua.LuaHudRenderer
+import org.kociumba.kutils.client.lua.LuaLogger
+import org.kociumba.kutils.client.lua.MainThreadExecutor
 import org.kociumba.kutils.client.notes.NoteData
 import org.kociumba.kutils.client.notes.NotesScreen
 import org.kociumba.kutils.log
+import org.luaj.vm2.Globals
+import org.luaj.vm2.lib.jse.JsePlatform
 import org.lwjgl.glfw.GLFW
 import xyz.breadloaf.imguimc.Imguimc
 import xyz.breadloaf.imguimc.imguiInternal.ImguiLoader
@@ -35,6 +50,9 @@ var displayingCalc = false
 var displayNotes = false
 var client: MinecraftClient = MinecraftClient.getInstance()
 var chatHud: ChatHud? = null
+var isOnHypixel = false
+//var loacationPacket: ClientboundLocationPacket? = null
+val LUA_GLOBAL: Globals = JsePlatform.standardGlobals()
 
 //val mainWindow = UMinecraft.getMinecraft().window
 var largeRoboto: ImFont? = null
@@ -82,6 +100,15 @@ class KutilsClient : ClientModInitializer {
             )
         )
 
+        val testKey: KeyBinding = KeyBindingHelper.registerKeyBinding(
+            KeyBinding(
+                "test",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_COMMA,
+                "kutils"
+            )
+        )
+
         // Use once, minimize performance impact
         ClientTickEvents.END_CLIENT_TICK.register { client ->
             while (open.wasPressed()) {
@@ -112,6 +139,14 @@ class KutilsClient : ClientModInitializer {
                 if (client.currentScreen !is NotesScreen) {
                     NotesScreen.reset()
                     UScreen.displayScreen(NotesScreen)
+                }
+            }
+
+            while (testKey.wasPressed()) {
+                try {
+                    LUA_GLOBAL.loadfile("config/kutils/lua/test.lua").invoke()
+                } catch (e: Exception) {
+                    log.error("failed execute lua script: ", e)
                 }
             }
 
@@ -195,10 +230,10 @@ class KutilsClient : ClientModInitializer {
         WeightEdit.loadWeights()
         log.info("prediction weights loaded")
 
-        Runtime.getRuntime().addShutdownHook(Thread {
+        ClientLifecycleEvents.CLIENT_STOPPING.register {
             WeightEdit.saveWeights()
             log.info("prediction weights saved")
-        })
+        }
 
         NoteData.loadNotes()
         log.info("notes loaded")
@@ -206,6 +241,29 @@ class KutilsClient : ClientModInitializer {
 //        HudRenderCallback.EVENT.register { drawContext, tickDeltaManager ->
 //            TestOverlay().renderElementaOverlay()
 //        }
+
+//        HypixelModAPI.getInstance().createHandler(ClientboundHelloPacket::class.java) { packet ->
+//            log.info("received hello packet")
+//            isOnHypixel = true
+//        }
+//
+//        HypixelModAPI.getInstance().subscribeToEventPacket(ClientboundLocationPacket::class.java)
+//
+//        HypixelModAPI.getInstance().createHandler(ClientboundLocationPacket::class.java) { packet ->
+//            client.execute {
+//                log.info(packet.toString())
+//                loacationPacket = packet
+//            }
+//        }
+
+        // register everything related to lua
+        LUA_GLOBAL.load(LuaKotlinLib())
+        LUA_GLOBAL.load(LuaKotlinExLib())
+        KutilsClassLoader.register(LUA_GLOBAL, Kutils::class.java.classLoader)
+        LuaLogger.register(LUA_GLOBAL)
+        MainThreadExecutor.register(LUA_GLOBAL, client)
+        LuaHudRenderer.register(LUA_GLOBAL)
+        log.info("lua capabilities loaded")
 
         log.info("kutils initial setup done")
     }

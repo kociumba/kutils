@@ -12,6 +12,8 @@ val log: Logger = LogManager.getLogger("kutils")
 object KutilsLogger {
     fun info(msg: String) = log.info(msg)
     fun warn(msg: String) = log.warn(msg)
+    fun error(msg: String) = log.error(msg)
+    fun debug(msg: String) = log.debug(msg)
 }
 
 class Kutils : ModInitializer {

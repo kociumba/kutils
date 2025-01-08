@@ -3,10 +3,17 @@ package org.kociumba.kutils.client.hud
 import imgui.ImGui
 import imgui.flag.ImGuiCond
 import imgui.flag.ImGuiWindowFlags
+//import net.hypixel.modapi.HypixelModAPI
+//import net.hypixel.modapi.packet.ClientboundHypixelPacket
+//import net.hypixel.modapi.packet.impl.clientbound.ClientboundPartyInfoPacket
+//import net.hypixel.modapi.packet.impl.clientbound.ClientboundPlayerInfoPacket
+//import net.hypixel.modapi.packet.impl.clientbound.ClientboundVersionedPacket
+//import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket
 import net.minecraft.client.MinecraftClient
 import org.kociumba.kutils.client.c
 import org.kociumba.kutils.client.imgui.ImGuiKutilsTransparentTheme
 import org.kociumba.kutils.client.imgui.coloredText
+import org.kociumba.kutils.log
 import xyz.breadloaf.imguimc.interfaces.Renderable
 import xyz.breadloaf.imguimc.interfaces.Theme
 
@@ -20,6 +27,7 @@ import xyz.breadloaf.imguimc.interfaces.Theme
 object hud : Renderable {
     fun init() {
         ImGui.getIO().configWindowsMoveFromTitleBarOnly = false
+        ImGui.getFrameCount()
     }
 
     override fun getName(): String? {
