@@ -29,7 +29,13 @@ class KutilsClassLoader(private val modClassLoader: ClassLoader) : LuaFunction()
                     if (cls == Runnable::class.java) {
                         return CoerceJavaToLua.coerce(object : Runnable {
                             override fun run() {
-                                arg.checkfunction().call()
+                                try {
+                                    arg.checkfunction().call()
+                                } catch (e: Exception) {
+                                    if (e !is CustomDebugLib.ScriptInterruptException && e !is InterruptedException) {
+                                        log.error("Error in thread", e)
+                                    }
+                                }
                             }
                         })
                     }
@@ -49,7 +55,7 @@ class KutilsClassLoader(private val modClassLoader: ClassLoader) : LuaFunction()
                             try {
                                 arg.checkfunction().call() // the source of all errors xd
                             } catch (e: Exception) {
-                                if (e !is CustomDebugLib.ScriptInterruptException) {
+                                if (e !is CustomDebugLib.ScriptInterruptException && e !is InterruptedException) {
                                     log.error("Error in thread", e)
                                 }
                             }
@@ -118,7 +124,13 @@ class KutilsClassLoader(private val modClassLoader: ClassLoader) : LuaFunction()
                 arg.isfunction() && cls == Thread::class.java -> {
                     val runnable = object : Runnable {
                         override fun run() {
-                            arg.checkfunction().call()
+                            try {
+                                arg.checkfunction().call()
+                            } catch (e: Exception) {
+                                if (e !is CustomDebugLib.ScriptInterruptException && e !is InterruptedException) {
+                                    log.error("Error in thread", e)
+                                }
+                            }
                         }
                     }
                     CoerceJavaToLua.coerce(Thread(runnable))

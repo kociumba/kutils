@@ -107,7 +107,7 @@ class ModuleManager(private val client: MinecraftClient) {
                 isInitialized = false
 
             } catch (e: Exception) {
-                if (e !is CustomDebugLib.ScriptInterruptException) {
+                if (e !is CustomDebugLib.ScriptInterruptException && e !is InterruptedException) {
                     log.error("Error during cleanup of script ${metadata.fileName}: ${e.message}")
                 }
             }
@@ -164,6 +164,73 @@ class ModuleManager(private val client: MinecraftClient) {
     fun reloadScript(fileName: String) {
         disableScript(fileName)
         enableScript(fileName)
+    }
+
+    fun createScript(fileName: String) {
+        val file = File(scriptsFolder, fileName)
+        if (!file.exists()) {
+            file.writeText("""-- New Lua script
+local log = createLogger("${fileName.removeSuffix(".lua")}")
+log.info("Script initialized!")
+
+-- Register cleanup callback
+onDisable(function()
+    log.info("Script disabled!")
+end)
+""")
+            val metadata = LuaScriptMetadata(
+                fileName = fileName,
+                displayName = fileName.removeSuffix(".lua"),
+                lastModified = file.lastModified()
+            )
+            scriptMetadata[fileName] = metadata
+        }
+    }
+
+    fun deleteScript(fileName: String) {
+        // First disable the script if it's running
+        if (scriptMetadata[fileName]?.isEnabled == true) {
+            disableScript(fileName)
+        }
+        
+        // Remove the script file
+        val file = File(scriptsFolder, fileName)
+        if (file.exists()) {
+            file.delete()
+        }
+        
+        // Remove from metadata
+        scriptMetadata.remove(fileName)
+    }
+
+    fun renameScript(oldName: String, newName: String) {
+        // First disable the script if it's running
+        val wasEnabled = scriptMetadata[oldName]?.isEnabled == true
+        if (wasEnabled) {
+            disableScript(oldName)
+        }
+        
+        // Rename the file
+        val oldFile = File(scriptsFolder, oldName)
+        val newFile = File(scriptsFolder, newName)
+        if (oldFile.exists() && !newFile.exists()) {
+            oldFile.renameTo(newFile)
+            
+            // Update metadata
+            scriptMetadata[oldName]?.let { oldMetadata ->
+                val newMetadata = oldMetadata.copy(
+                    fileName = newName,
+                    displayName = newName.removeSuffix(".lua")
+                )
+                scriptMetadata.remove(oldName)
+                scriptMetadata[newName] = newMetadata
+                
+                // Re-enable if it was enabled
+                if (wasEnabled) {
+                    enableScript(newName)
+                }
+            }
+        }
     }
 
     // Getters for UI
