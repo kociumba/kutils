@@ -60,7 +60,7 @@ Implemented features:
 - image previews in chat, when hovering over an image
 
 > [!NOTE]
-> Since v0.0.3 any imgui windows from kutils, will save there size, position etc. and restore
+> Since v0.0.3 any imgui windows from kutils, will save their size, position etc. and restore
 > them on next launch.
 
 Basically done features 🤷:
@@ -126,7 +126,7 @@ Most windows can also be docked to each other and collapsed.
 
 ## Known issues
 
-- imgui windows are not positioned correctly when not in fullscreen
+- chat image preview doesn't work with chatpatches restored chat history
 - if an imgui hud window is opened while draggability is off, and outside the minecraft window, it will be stuck there
 
 ## FAQ
