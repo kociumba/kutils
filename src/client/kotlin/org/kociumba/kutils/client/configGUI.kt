@@ -8,13 +8,13 @@ import imgui.ImGui
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.minecraft.client.MinecraftClient
+import org.kociumba.kutils.client.bazaar.WeightEdit
 import org.kociumba.kutils.client.chat.ChatImageUI
 import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.performanceHud
 import xyz.breadloaf.imguimc.Imguimc
 import java.awt.Color
 import java.io.File
-import org.kociumba.kutils.client.bazaar.WeightEdit
 
 /**
  * The best color presets I could think of
@@ -405,6 +405,14 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         }
     }
 
+    @Property(
+        type = PropertyType.SWITCH,
+        name = "saab mode",
+        description = "???",
+        category = "gui",
+    )
+    var saabMode: Boolean = false
+
     init {
         initialize()
 
@@ -477,6 +485,14 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
             } else {
                 Imguimc.pullRenderable(ChatImageUI)
             }
+        }
+
+        registerListener(clazz.getDeclaredField("saabMode")) { value: Boolean ->
+            if (value) {
+                 Imguimc.pushRenderable(saab)
+             } else {
+                 Imguimc.pullRenderable(saab)
+             }
         }
 
         addDependency(clazz.getDeclaredField("damageTintColor"), clazz.getDeclaredField("shouldTintDamage"))

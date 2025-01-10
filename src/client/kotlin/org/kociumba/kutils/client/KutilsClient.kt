@@ -28,6 +28,7 @@ import org.kociumba.kutils.client.bazaar.WeightEdit
 import org.kociumba.kutils.client.bazaar.bazaarUI
 import org.kociumba.kutils.client.chat.ChatImageUI
 import org.kociumba.kutils.client.chat.registerChatMessageHandler
+import org.kociumba.kutils.client.funny.SaabMode
 import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.performanceHud
 import org.kociumba.kutils.client.lua.LuaEditor
@@ -57,6 +58,9 @@ var isOnHypixel = false
 //var loacationPacket: ClientboundLocationPacket? = null
 //val LUA_GLOBAL: Globals = JsePlatform.standardGlobals()
 lateinit var scriptManager: ModuleManager
+var saab = SaabMode().apply {
+    initialize()
+}
 
 //val mainWindow = UMinecraft.getMinecraft().window
 var largeRoboto: ImFont? = null
@@ -268,29 +272,29 @@ class KutilsClient : ClientModInitializer {
 //        MainThreadExecutor.register(LUA_GLOBAL, client)
 //        LuaHudRenderer.register(LUA_GLOBAL)
 //        log.info("lua capabilities loaded")
-        scriptManager = ModuleManager(client).apply {
-            // Load scripts from disk
-            loadScripts()
-        }
-        LuaEditor.initialize(scriptManager)
 
         val scriptsFolder = File("config/kutils/lua/")
         val typesFolder = File(scriptsFolder, "types")
 
-        // Create necessary directories
-        scriptsFolder.mkdirs()
-        typesFolder.mkdirs()
+        ClientLifecycleEvents.CLIENT_STARTED.register {
+            scriptManager = ModuleManager(client).apply {
+                // Load scripts from disk
+                loadScripts()
+            }
+            LuaEditor.initialize(scriptManager)
+
+            scriptsFolder.mkdirs()
+            typesFolder.mkdirs()
+        }
 
         // Extract LSP config files from resources
         try {
-            // Extract .luarc.json
             javaClass.getResourceAsStream("/lua/configs/.luarc.json")?.use { input ->
                 File(scriptsFolder, ".luarc.json").outputStream().use { output ->
                     input.copyTo(output)
                 }
             }
 
-            // Extract type definitions
             javaClass.getResourceAsStream("/lua/configs/types/kutils.lua")?.use { input ->
                 File(typesFolder, "kutils.lua").outputStream().use { output ->
                     input.copyTo(output)
@@ -300,6 +304,7 @@ class KutilsClient : ClientModInitializer {
             log.error("Failed to extract LSP configuration files: ${e.message}")
         }
 
+        if (c.saabMode) Imguimc.pushRenderable(saab)
 
         log.info("kutils initial setup done")
     }
