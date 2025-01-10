@@ -8,8 +8,9 @@
   "authors": ["kociumba"],
   "contact": {
     "sources": "https://github.com/kociumba/kutils",
-    "homepage": "https://github.com/kociumba/kutils",
-    "issues": "https://github.com/kociumba/kutils/issues"
+    "homepage": "https://kociumba.gitbook.io/kutils/",
+    "issues": "https://github.com/kociumba/kutils/issues",
+    "wiki": "https://kociumba.gitbook.io/kutils/"
   },
   "license": "MIT",
   "icon": "assets/kutils/icon.png",

@@ -147,8 +147,12 @@ object LuaEditor: ImGuiScreen(Text.literal("Lua Editor"), true) {
                     }
                     ImGui.separator()
                     if (ImGui.menuItem("Delete")) {
-                        scriptManager.deleteScript(fileName)
-                        if (selectedScript == fileName) {
+                        val currentFileName = scriptManager.getScriptMetadata()
+                            .entries.find { it.value.displayName == metadata.displayName }
+                            ?.key ?: fileName
+                            
+                        scriptManager.deleteScript(currentFileName)
+                        if (selectedScript == currentFileName) {
                             selectedScript = null
                             editor.text = ""
                         }
