@@ -58,6 +58,7 @@ Implemented features:
 - historical item price graphs like in [NotEnoughUpdates](https://github.com/NotEnoughUpdates/NotEnoughUpdates),
     to open the graph, click on any item in the bazaar ui.
 - image previews in chat, when hovering over an image
+- submit signs by pressing `enter`
 
 > [!NOTE]
 > Since v0.0.3 any imgui windows from kutils, will save their size, position etc. and restore

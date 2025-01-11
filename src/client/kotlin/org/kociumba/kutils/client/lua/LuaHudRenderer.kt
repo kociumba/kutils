@@ -52,15 +52,13 @@ class LuaHudRenderer(private val scriptId: String? = null, private val scriptVer
                             CoerceJavaToLua.coerce(tickCounter)
                         )
                     } catch (e: Exception) {
-                        // Only log errors if this is the current version of the script
                         if (scriptVersions[scriptId] == scriptVersion) {
-                            log.error("Error in Lua HUD render callback for script $scriptId: ${e.message}")
+                            log.error("Error in Lua HUD render callback for module $scriptId: ${e.message}")
                         }
                     }
                 }
             }
-            
-            // Register the callback - we can't unregister it, but we can make it no-op
+
             HudRenderCallback.EVENT.register(callback)
         }
         return NIL

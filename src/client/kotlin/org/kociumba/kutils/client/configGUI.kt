@@ -410,8 +410,18 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         name = "saab mode",
         description = "???",
         category = "gui",
+        subcategory = "???"
     )
     var saabMode: Boolean = false
+
+    @Property(
+        type = PropertyType.SWITCH,
+        name = "submit signs with enter",
+        description = "you can still use shift+enter to write new lines",
+        category = "gui",
+        subcategory = "signs"
+    )
+    var shouldSubmitSignsWithEnter: Boolean = true
 
     init {
         initialize()

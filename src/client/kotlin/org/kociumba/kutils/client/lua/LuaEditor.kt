@@ -4,19 +4,18 @@ import imgui.ImGui
 import imgui.extension.texteditor.TextEditor
 import imgui.extension.texteditor.TextEditorLanguageDefinition
 import imgui.flag.ImGuiCond
-import imgui.flag.ImGuiInputTextFlags
 import imgui.flag.ImGuiWindowFlags
-import net.minecraft.text.Text
-import org.kociumba.kutils.client.imgui.ImGuiKutilsThemeNoTransparent
-import xyz.breadloaf.imguimc.screen.ImGuiScreen
-import java.lang.reflect.Field
-import org.kociumba.kutils.log
-import xyz.breadloaf.imguimc.screen.ImGuiWindow
-import xyz.breadloaf.imguimc.screen.WindowRenderer
 import imgui.type.ImBoolean
 import imgui.type.ImString
+import net.minecraft.text.Text
 import org.kociumba.kutils.client.ENTER
+import org.kociumba.kutils.client.imgui.ImGuiKutilsThemeNoTransparent
+import org.kociumba.kutils.log
 import org.lwjgl.glfw.GLFW
+import xyz.breadloaf.imguimc.screen.ImGuiScreen
+import xyz.breadloaf.imguimc.screen.ImGuiWindow
+import xyz.breadloaf.imguimc.screen.WindowRenderer
+import java.lang.reflect.Field
 
 object LuaEditor: ImGuiScreen(Text.literal("Lua Editor"), true) {
     private lateinit var scriptManager: ModuleManager
@@ -78,16 +77,11 @@ object LuaEditor: ImGuiScreen(Text.literal("Lua Editor"), true) {
         )
     }
 
-    // TODO: Improve lua module management in the ui
-    //  - [x] Make the checkbox work
-    //  - [ ] Add/Remove/Rename/Search scripts
-    //  - [x] Keyboard shortcuts
-    //  labels: enhancement
+    // DONE: this is ready for a first release of a big feature like this
     private fun renderScriptList() {
         ImGui.setWindowSize(300f, 400f, ImGuiCond.FirstUseEver)
         ImGui.setWindowPos(50f, 50f, ImGuiCond.FirstUseEver)
 
-        // Add script button and search bar
         if (ImGui.button("New Script") || 
             (ImGui.isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL) && ImGui.isKeyPressed(GLFW.GLFW_KEY_N))) {
             showNewScriptPopup = true
@@ -104,7 +98,6 @@ object LuaEditor: ImGuiScreen(Text.literal("Lua Editor"), true) {
             }
         }
 
-        // Filter scripts based on search query
         scriptManager.getScriptMetadata()
             .filter { (fileName, metadata) ->
                 searchQuery.get().isEmpty() || 
@@ -115,7 +108,6 @@ object LuaEditor: ImGuiScreen(Text.literal("Lua Editor"), true) {
 
                 // Get or create the ImBoolean state for this script
                 val isEnabled = enabledStates.getOrPut(fileName) { ImBoolean(metadata.isEnabled) }
-                // Update the ImBoolean if the metadata changed (e.g. from a reload)
                 if (isEnabled.get() != metadata.isEnabled) {
                     isEnabled.set(metadata.isEnabled)
                 }
@@ -164,8 +156,7 @@ object LuaEditor: ImGuiScreen(Text.literal("Lua Editor"), true) {
             }
 
         renderNewScriptPopup()
-        
-        // Open rename popup if flag is set
+
         if (showRenamePopup) {
             ImGui.openPopup("Rename Script")
             showRenamePopup = false
@@ -189,6 +180,8 @@ object LuaEditor: ImGuiScreen(Text.literal("Lua Editor"), true) {
         ImGui.beginChild("editor", 0f, -30f, true)
 
         // Begin disabled group if no script is selected
+        //
+        // This doesn't actually have any effect on the editor, sadge
         if (selectedScript == null) {
             ImGui.beginDisabled()
         }
@@ -201,7 +194,6 @@ object LuaEditor: ImGuiScreen(Text.literal("Lua Editor"), true) {
 
         ImGui.endChild()
 
-        // Control buttons
         ImGui.separator()
         if (selectedScript != null) {
             if (ImGui.button("Save")) {
@@ -212,7 +204,7 @@ object LuaEditor: ImGuiScreen(Text.literal("Lua Editor"), true) {
                 }
             }
             ImGui.sameLine()
-            if (ImGui.button("Close")) {
+            if (ImGui.button("Deselect")) {
                 selectedScript = null
             }
         }

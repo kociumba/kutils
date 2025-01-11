@@ -1,6 +1,7 @@
 package org.kociumba.kutils.client.lua
 
 import net.minecraft.client.MinecraftClient
+import org.kociumba.kutils.log
 import org.luaj.vm2.Globals
 import org.luaj.vm2.LuaFunction
 import org.luaj.vm2.LuaValue
@@ -15,7 +16,7 @@ class MainThreadExecutor(private val client: MinecraftClient) : LuaFunction() {
                 try {
                     luaFunc.checkfunction().call()
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    log.error(e)
                 }
             }
         }

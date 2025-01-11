@@ -24,13 +24,11 @@ class SaabMode: Renderable {
     lateinit var saab: ImImage
     var ready = false
 
-    // Movement variables
     private val velocity = 20f      // Base velocity
     private var timeOffset = 0f    // Time offset for initial position
     private var startTime = System.currentTimeMillis()
     private val initialPos = floatArrayOf(0f, 0f)  // Initial x,y position
 
-    // Scaled dimensions
     private var scaledImageWidth = 0f
     private var scaledImageHeight = 0f
 
@@ -38,17 +36,16 @@ class SaabMode: Renderable {
     private var lastWindowHeight = 0f
 
     private fun initializeMovement() {
-        // Store initial window dimensions
         lastWindowWidth = client.window.scaledWidth.toFloat()
         lastWindowHeight = client.window.scaledHeight.toFloat()
 
-        // Keep your existing initialization logic
         initialPos[0] = (Math.random() * client.window.scaledWidth).toFloat()
         initialPos[1] = (Math.random() * client.window.scaledHeight).toFloat()
         timeOffset = (Math.random() * 1000).toFloat()
         startTime = System.currentTimeMillis()
     }
 
+    // ama add an image randomizer here later
     fun initialize() {
         saab = ImImage().loadImageFromURL("https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/saab.jpg") { success ->
             ready = success
@@ -59,7 +56,6 @@ class SaabMode: Renderable {
     }
 
     override fun render() {
-        // Get valid window dimensions
         val windowWidth = max(1f, client.window.framebufferWidth.toFloat())
         val windowHeight = max(1f, client.window.framebufferHeight.toFloat())
 
@@ -90,13 +86,10 @@ class SaabMode: Renderable {
         )
 
         if (ready && ::saab.isInitialized && c.saabMode) {
-            // calculate size
             val windowWidth = max(1f, client.window.framebufferWidth.toFloat())
             val windowHeight = max(1f, client.window.framebufferHeight.toFloat())
 
-            // Check if window size changed
             if (windowWidth != lastWindowWidth || windowHeight != lastWindowHeight) {
-                // Adjust initial position proportionally
                 initialPos[0] = (initialPos[0] / lastWindowWidth) * windowWidth
                 initialPos[1] = (initialPos[1] / lastWindowHeight) * windowHeight
 
@@ -104,38 +97,30 @@ class SaabMode: Renderable {
                 lastWindowHeight = windowHeight
             }
 
-            val targetHeight = windowHeight * 0.25f  // Using multiply by 0.25 instead of divide by 4
+            val targetHeight = windowHeight * 0.25f
 
-            // Maintain aspect ratio
             val aspectRatio = saab.width.toFloat() / saab.height.toFloat()
             scaledImageHeight = targetHeight
             scaledImageWidth = targetHeight * aspectRatio
 
-            // Calculate time-based position
-            val currentTime = (System.currentTimeMillis() - startTime) * 0.01f // Convert to seconds
+            val currentTime = (System.currentTimeMillis() - startTime) * 0.01f // speed of animation
             val f = (currentTime + timeOffset) * velocity
 
-            // Available space for movement (screen size minus image size)
             val boundsWidth = windowWidth - scaledImageWidth
             val boundsHeight = windowHeight - scaledImageHeight
 
-            // Calculate time-based coordinates
             val timeX = initialPos[0] + f
             val timeY = initialPos[1] + f
 
-            // Calculate cycle counts (how many times we've hit each edge)
             val cycleX = floor(timeX / boundsWidth).toInt()
             val cycleY = floor(timeY / boundsHeight).toInt()
 
-            // Calculate position within current cycle
             val posInCycleX = timeX % boundsWidth
             val posInCycleY = timeY % boundsHeight
 
-            // Final position with perfect bounces
             val x = if ((cycleX and 1) == 1) boundsWidth - posInCycleX else posInCycleX
             val y = if ((cycleY and 1) == 1) boundsHeight - posInCycleY else posInCycleY
 
-            // Draw the image
             ImGui.setCursorPos(x, y)
             ImGui.image(saab.glID, scaledImageWidth, scaledImageHeight)
         }

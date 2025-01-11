@@ -40,7 +40,7 @@ class CustomDebugLib : DebugLib() {
     class ScriptInterruptException : RuntimeException("Script execution interrupted")
 }
 
-// ass good as this is going to get
+// as good as this is going to get
 class ModuleManager(private val client: MinecraftClient) {
     private val scriptContexts = mutableMapOf<String, ScriptContext>()
     private val scriptMetadata = mutableMapOf<String, LuaScriptMetadata>()
@@ -84,10 +84,13 @@ class ModuleManager(private val client: MinecraftClient) {
         var cleanupCallback: LuaFunction? = null
     )
 
+    /**
+     * The actual backbone of the whole module system, holds and manages all the contexts and data
+     */
     inner class ScriptContext(val metadata: LuaScriptMetadata) {
         private var debugLib: CustomDebugLib = CustomDebugLib()
         var globals: Globals? = JsePlatform.debugGlobals().apply {
-            load(debugLib)
+            load(debugLib) // first always load the interrupt lib, couse without it there is no stopping the lua scripts
         }
         private var isInitialized = false
 
@@ -97,13 +100,15 @@ class ModuleManager(private val client: MinecraftClient) {
 
             try {
                 globals?.let { g ->
+                    // these are not really needed since we provide basically all the infrastructure ourselves
                     g.load(LuaKotlinLib())
                     g.load(LuaKotlinExLib())
+
+                    // the aforementioned our infrastructure 😎
                     KutilsClassLoader.register(g, Kutils::class.java.classLoader)
                     LuaLogger.register(g)
                     MainThreadExecutor.register(g, client)
 
-                    // Add cleanup callback registration
                     g.set("onDisable", object : OneArgFunction() {
                         override fun call(callback: LuaValue): LuaValue {
                             if (callback.isfunction()) {
@@ -113,7 +118,6 @@ class ModuleManager(private val client: MinecraftClient) {
                         }
                     })
 
-                    // Add enabled state check
                     g.set("isEnabled", object : ZeroArgFunction() {
                         override fun call(): LuaValue = valueOf(metadata.isEnabled)
                     })
@@ -123,7 +127,7 @@ class ModuleManager(private val client: MinecraftClient) {
                     isInitialized = true
                 }
             } catch (e: Exception) {
-                log.error("Failed to initialize script context for ${metadata.fileName}: ${e.message}")
+                log.error("Failed to initialize module context for ${metadata.fileName}: ${e.message}")
             }
         }
 
@@ -133,7 +137,7 @@ class ModuleManager(private val client: MinecraftClient) {
                     metadata.cleanupCallback?.call()
                     debugLib.interrupted = true
                 } catch (e: Exception) {
-                    log.error("Error during cleanup callback of script ${metadata.fileName}: ${e.message}")
+                    log.error("Error during cleanup callback of module ${metadata.fileName}: ${e.message}")
                 }
 
                 // Clear all references
@@ -142,11 +146,12 @@ class ModuleManager(private val client: MinecraftClient) {
 
             } catch (e: Exception) {
                 if (e !is CustomDebugLib.ScriptInterruptException && e !is InterruptedException) {
-                    log.error("Error during cleanup of script ${metadata.fileName}: ${e.message}")
+                    log.error("Error during cleanup of module ${metadata.fileName}: ${e.message}")
                 }
             }
 
-            // Remove from HUD renderer
+            // Remove from HUD renderer, this system is flawed, but good enough
+            // probably due for a rewrite in the future
             LuaHudRenderer.removeScript(metadata.fileName)
             metadata.isEnabled = false
             metadata.cleanupCallback = null
@@ -160,13 +165,13 @@ class ModuleManager(private val client: MinecraftClient) {
                 fileName = file.name,
                 displayName = file.nameWithoutExtension,
                 lastModified = file.lastModified(),
-                isEnabled = false  // Start with disabled state
+                isEnabled = false
             )
             scriptMetadata[file.name] = metadata
             
-            // Enable scripts that were enabled in the previous session
+            // Restore enabled state
             if (wasEnabled) {
-                enableScript(file.name)  // This will set isEnabled to true if successful
+                enableScript(file.name)
             }
         }
     }
@@ -183,7 +188,7 @@ class ModuleManager(private val client: MinecraftClient) {
             context.globals?.load(scriptFile.reader(), fileName)?.call()
             metadata.isEnabled = true
             LuaHudRenderer.setScriptEnabled(fileName, true)
-            saveConfig()  // Save config when a script is enabled
+            saveConfig()
         } catch (e: Exception) {
             println("Failed to enable script $fileName: ${e.message}")
             disableScript(fileName)
@@ -195,9 +200,10 @@ class ModuleManager(private val client: MinecraftClient) {
         scriptContexts.remove(fileName)
         LuaHudRenderer.setScriptEnabled(fileName, false)
         scriptMetadata[fileName]?.isEnabled = false
-        saveConfig()  // Save config when a script is disabled
+        saveConfig()
     }
 
+    // should probably add like a "panic" button or something, that utilizes this
     fun disableAllScripts() {
         scriptMetadata.keys.toList().forEach { fileName ->
             disableScript(fileName)
@@ -212,13 +218,16 @@ class ModuleManager(private val client: MinecraftClient) {
     fun createScript(fileName: String) {
         val file = File(scriptsFolder, fileName)
         if (!file.exists()) {
-            file.writeText("""-- New Lua script
+            file.writeText("""-- Use this template to create your own lua module!
+-- You can find more info on this feature here: https://kociumba.gitbook.io/kutils/
+
+-- Create a named logger
 local log = createLogger("${fileName.removeSuffix(".lua")}")
-log.info("Script initialized!")
+log.info("${fileName.removeSuffix(".lua")} initialized!")
 
 -- Register cleanup callback
 onDisable(function()
-    log.info("Script disabled!")
+    log.info("${fileName.removeSuffix(".lua")} disabled!")
 end)
 """)
             val metadata = LuaScriptMetadata(
@@ -231,26 +240,23 @@ end)
     }
 
     fun deleteScript(fileName: String) {
-        // First disable the script if it's running
         if (scriptMetadata[fileName]?.isEnabled == true) {
             disableScript(fileName)
         }
-        
-        // Remove the script file
+
         val file = File(scriptsFolder, fileName)
         if (file.exists()) {
             try {
                 if (!file.delete()) {
-                    log.error("Failed to delete script file: $fileName")
+                    log.error("Failed to delete module file: $fileName")
                 }
             } catch (e: Exception) {
-                log.error("Error deleting script file $fileName: ${e.message}")
+                log.error("Error deleting module file $fileName: ${e.message}")
             }
         } else {
-            log.warn("Script file not found for deletion: $fileName")
+            log.warn("Module file not found for deletion: $fileName")
         }
-        
-        // Remove from metadata
+
         scriptMetadata.remove(fileName)
     }
 
@@ -266,27 +272,23 @@ end)
         val newFile = File(scriptsFolder, newName)
         
         if (!oldFile.exists()) {
-            log.error("Cannot rename script: source file not found: $oldName")
+            log.error("Cannot rename module: source file not found: $oldName")
             return
         }
         
         if (newFile.exists()) {
-            log.error("Cannot rename script: destination file already exists: $newName")
+            log.error("Cannot rename module: destination file already exists: $newName")
             return
         }
 
         try {
-            // Read the content of the old file
             val content = oldFile.readText()
-            
-            // Write content to the new file
+
             newFile.writeText(content)
-            
-            // Delete the old file only if writing to new file was successful
+
             if (!oldFile.delete()) {
-                // If we can't delete the old file, delete the new one to avoid duplication
                 newFile.delete()
-                log.error("Failed to delete old script file during rename: $oldName")
+                log.error("Failed to delete old module file during rename: $oldName")
                 return
             }
             
@@ -298,8 +300,7 @@ end)
                 )
                 scriptMetadata.remove(oldName)
                 scriptMetadata[newName] = newMetadata
-                
-                // Re-enable if it was enabled
+
                 if (wasEnabled) {
                     enableScript(newName)
                 }
@@ -311,11 +312,11 @@ end)
             } catch (cleanupError: Exception) {
                 log.error("Error cleaning up after failed rename: ${cleanupError.message}")
             }
-            log.error("Error renaming script from $oldName to $newName: ${e.message}")
+            log.error("Error renaming module from $oldName to $newName: ${e.message}")
         }
     }
 
-    // Getters for UI
+    // Utils for UI
     fun getScriptMetadata(): Map<String, LuaScriptMetadata> = scriptMetadata.toMap()
     fun getScriptContent(fileName: String): String =
         File(scriptsFolder, fileName).takeIf { it.exists() }?.readText() ?: ""
