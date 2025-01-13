@@ -1,9 +1,8 @@
 package org.kociumba.kutils.client
 
-import com.github.only52607.luakt.CoerceKotlinToLua
-import com.github.only52607.luakt.lib.LuaKotlinExLib
-import com.github.only52607.luakt.lib.LuaKotlinLib
-import gg.essential.universal.UChat
+//import net.hypixel.modapi.HypixelModAPI
+//import net.hypixel.modapi.packet.impl.clientbound.ClientboundHelloPacket
+//import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket
 import gg.essential.universal.UScreen
 import gg.essential.universal.utils.MCMinecraft
 import imgui.*
@@ -15,15 +14,10 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
-//import net.hypixel.modapi.HypixelModAPI
-//import net.hypixel.modapi.packet.impl.clientbound.ClientboundHelloPacket
-//import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.hud.ChatHud
 import net.minecraft.client.option.KeyBinding
 import net.minecraft.client.util.InputUtil
-import org.kociumba.kutils.Kutils
 import org.kociumba.kutils.client.bazaar.WeightEdit
 import org.kociumba.kutils.client.bazaar.bazaarUI
 import org.kociumba.kutils.client.chat.ChatImageUI
@@ -32,22 +26,18 @@ import org.kociumba.kutils.client.funny.SaabMode
 import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.performanceHud
 import org.kociumba.kutils.client.lua.LuaEditor
-import org.kociumba.kutils.client.lua.LuaHudRenderer
-import org.kociumba.kutils.client.lua.LuaLogger
-import org.kociumba.kutils.client.lua.MainThreadExecutor
 import org.kociumba.kutils.client.lua.ModuleManager
+import org.kociumba.kutils.client.mappings.MappingLoader
 import org.kociumba.kutils.client.notes.NoteData
 import org.kociumba.kutils.client.notes.NotesScreen
 import org.kociumba.kutils.log
-import org.luaj.vm2.Globals
-import org.luaj.vm2.lib.jse.JsePlatform
 import org.lwjgl.glfw.GLFW
 import xyz.breadloaf.imguimc.Imguimc
 import xyz.breadloaf.imguimc.imguiInternal.ImguiLoader
 import xyz.breadloaf.imguimc.imguiInternal.InitCallback
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
-import java.io.File
 
 var c: ConfigGUI = ConfigGUI()
 var displayingCalc = false
@@ -61,6 +51,9 @@ lateinit var scriptManager: ModuleManager
 var saab = SaabMode().apply {
     initialize()
 }
+val version = "1.21.1"
+val mappingLoader = MappingLoader(version)
+//val mappingsFile = mappingLoader.downloadAndExtractMappings()
 
 //val mainWindow = UMinecraft.getMinecraft().window
 var largeRoboto: ImFont? = null
@@ -275,6 +268,8 @@ class KutilsClient : ClientModInitializer {
 
         val scriptsFolder = File("config/kutils/lua/")
         val typesFolder = File(scriptsFolder, "types")
+
+        mappingLoader.loadMappings()
 
         ClientLifecycleEvents.CLIENT_STARTED.register {
             scriptManager = ModuleManager(client).apply {

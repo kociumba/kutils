@@ -1,24 +1,22 @@
 package org.kociumba.kutils.client.lua
 
-import com.github.only52607.luakt.lib.LuaKotlinExLib
-import com.github.only52607.luakt.lib.LuaKotlinLib
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import net.minecraft.client.MinecraftClient
 import org.kociumba.kutils.Kutils
 import org.kociumba.kutils.client.KutilsClassLoader
+import org.kociumba.kutils.client.mappingLoader
+import org.kociumba.kutils.log
 import org.luaj.vm2.Globals
 import org.luaj.vm2.LuaFunction
-import org.luaj.vm2.lib.jse.JsePlatform
-import java.io.File
-import org.kociumba.kutils.log
-import org.luaj.vm2.LuaBoolean
 import org.luaj.vm2.LuaValue
 import org.luaj.vm2.Varargs
 import org.luaj.vm2.lib.DebugLib
 import org.luaj.vm2.lib.OneArgFunction
 import org.luaj.vm2.lib.ZeroArgFunction
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.encodeToString
+import org.luaj.vm2.lib.jse.JsePlatform
+import java.io.File
 
 @Serializable
 data class ScriptConfig(
@@ -89,7 +87,7 @@ class ModuleManager(private val client: MinecraftClient) {
      */
     inner class ScriptContext(val metadata: LuaScriptMetadata) {
         private var debugLib: CustomDebugLib = CustomDebugLib()
-        var globals: Globals? = JsePlatform.debugGlobals().apply {
+        var globals: Globals? = JsePlatform.standardGlobals().apply {
             load(debugLib) // first always load the interrupt lib, couse without it there is no stopping the lua scripts
         }
         private var isInitialized = false
@@ -100,12 +98,19 @@ class ModuleManager(private val client: MinecraftClient) {
 
             try {
                 globals?.let { g ->
-                    // these are not really needed since we provide basically all the infrastructure ourselves
-                    g.load(LuaKotlinLib())
-                    g.load(LuaKotlinExLib())
+                    try {
+                        // these are not really needed since we provide basically all the infrastructure ourselves
+                        val luaKotlinLibClass = Class.forName("com.github.only52607.luakt.lib.LuaKotlinLib")
+                        val luaKotlinExLibClass = Class.forName("com.github.only52607.luakt.lib.LuaKotlinExLib")
+
+                        g.load(luaKotlinLibClass.getDeclaredConstructor().newInstance() as LuaFunction)
+                        g.load(luaKotlinExLibClass.getDeclaredConstructor().newInstance() as LuaFunction)
+                    } catch (e: Exception) {
+                        log.error("Failed to find class definitions for luakt libs")
+                    }
 
                     // the aforementioned our infrastructure 😎
-                    KutilsClassLoader.register(g, Kutils::class.java.classLoader)
+                    KutilsClassLoader.register(g, Kutils::class.java.classLoader, mappingLoader)
                     LuaLogger.register(g)
                     MainThreadExecutor.register(g, client)
 
@@ -190,7 +195,7 @@ class ModuleManager(private val client: MinecraftClient) {
             LuaHudRenderer.setScriptEnabled(fileName, true)
             saveConfig()
         } catch (e: Exception) {
-            println("Failed to enable script $fileName: ${e.message}")
+            log.error("Failed to enable script $fileName: ${e.message}", e)
             disableScript(fileName)
         }
     }

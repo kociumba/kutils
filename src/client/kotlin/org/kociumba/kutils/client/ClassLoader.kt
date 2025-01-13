@@ -1,20 +1,32 @@
 package org.kociumba.kutils.client
 
+import net.fabricmc.loader.api.FabricLoader
 import org.kociumba.kutils.client.lua.CustomDebugLib
+import org.kociumba.kutils.client.mappings.MappingLoader
 import org.kociumba.kutils.log
-import org.luaj.vm2.Globals
-import org.luaj.vm2.LuaFunction
-import org.luaj.vm2.LuaString
-import org.luaj.vm2.LuaTable
-import org.luaj.vm2.LuaValue
+import org.luaj.vm2.*
 import org.luaj.vm2.lib.jse.CoerceJavaToLua
 
 /**
  * This is an adapter class loader to enable lua the usage of already loaded classes through the minecraft class loader
+ *
+ * This is a very straight forward implementation in a dev env, since the class names are not obfuscated,
+ * but in prod this has to remap clas names at runtime to allow for the same functionality
  */
-class KutilsClassLoader(private val modClassLoader: ClassLoader) : LuaFunction() {
+class KutilsClassLoader(
+    private val modClassLoader: ClassLoader,
+    private val mappingLoader: MappingLoader,
+    private var debug: Boolean = FabricLoader.getInstance().isDevelopmentEnvironment
+) : LuaFunction() {
+
     override fun call(className: LuaValue): LuaValue {
-        val cls = modClassLoader.loadClass(className.checkjstring())
+        val obfuscatedName = if (debug) {
+            className.checkjstring().apply { log.info(this) }
+        } else {
+            mappingLoader.getClass(className.checkjstring()) ?: className.checkjstring().apply { log.info(this) }
+        }
+
+        val cls = modClassLoader.loadClass(obfuscatedName).apply { log.info(this) }
         val coerced = CoerceJavaToLua.coerce(cls)
         val meta = LuaTable()
 
@@ -25,22 +37,6 @@ class KutilsClassLoader(private val modClassLoader: ClassLoader) : LuaFunction()
             }
 
             override fun call(self: LuaValue, arg: LuaValue): LuaValue {
-                if (arg.isfunction()) {
-                    if (cls == Runnable::class.java) {
-                        return CoerceJavaToLua.coerce(object : Runnable {
-                            override fun run() {
-                                try {
-                                    arg.checkfunction().call()
-                                } catch (e: Exception) {
-                                    if (e !is CustomDebugLib.ScriptInterruptException && e !is InterruptedException) {
-                                        log.error("Error in thread", e)
-                                    }
-                                }
-                            }
-                        })
-                    }
-                }
-
                 // Create a wrapper for method calls that evaluates immediately
                 return createMethodWrapper(self, arg)
             }
@@ -56,7 +52,7 @@ class KutilsClassLoader(private val modClassLoader: ClassLoader) : LuaFunction()
                                 arg.checkfunction().call() // the source of all errors xd
                             } catch (e: Exception) {
                                 if (e !is CustomDebugLib.ScriptInterruptException && e !is InterruptedException) {
-                                    log.error("Error in thread", e)
+                                    log.warn("Error in thread", e)
                                 }
                             }
                         }
@@ -110,7 +106,12 @@ class KutilsClassLoader(private val modClassLoader: ClassLoader) : LuaFunction()
     private fun invokeMethod(self: LuaValue, methodName: String): Any? {
         val obj = self.touserdata()
         if (obj != null) {
-            val method = obj.javaClass.methods.find { it.name == methodName }
+            val obfuscatedMethodName = if (debug) {
+                methodName
+            } else {
+                mappingLoader.getMethod(obj.javaClass.name, methodName) ?: methodName
+            }
+            val method = obj.javaClass.methods.find { it.name == obfuscatedMethodName }
             if (method != null) {
                 return method.invoke(obj)
             }
@@ -146,8 +147,13 @@ class KutilsClassLoader(private val modClassLoader: ClassLoader) : LuaFunction()
     }
 
     companion object {
-        fun register(globals: Globals, modClassLoader: ClassLoader) {
-            globals.set("requireJVM", KutilsClassLoader(modClassLoader))
+        fun register(
+            globals: Globals,
+            modClassLoader: ClassLoader,
+            mappingLoader: MappingLoader,
+            debug: Boolean = FabricLoader.getInstance().isDevelopmentEnvironment
+        ) {
+            globals.set("requireJVM", KutilsClassLoader(modClassLoader, mappingLoader, debug))
         }
     }
 }

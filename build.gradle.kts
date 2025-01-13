@@ -95,7 +95,9 @@ dependencies {
 
     implementation("com.github.weisj:jsvg:1.6.0")
 
-    implementation("com.github.only52607.luakt:luakt:2.6.1")
+    implementation("com.github.only52607.luakt:luakt-core:2.6.1")
+    implementation("com.github.only52607.luakt:luakt-extension:2.6.1")
+    implementation(include("org.luaj:luaj-jse:3.0.1")!!)
 
 }
 
