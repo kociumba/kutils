@@ -57,16 +57,18 @@ data class ParameterMapping(
 class MappingLoader(private val version: String) {
     private val mappingsUrl = "https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/mappings-$version.zip"
     private val classMappings = mutableMapOf<String, ClassMapping>()
+    private val obfuscatedToYarn = mutableMapOf<String, String>()
     private lateinit var metadata: TinyMetadata
+
+    private val namespaces: List<String>
+        get() = metadata.namespaces
 
     fun downloadAndExtractMappings(): File {
         val versionFolder = File("mods/kutils/mappings/$version")
         val zipFile = File("mods/kutils/mappings/mappings-$version.zip")
         val extractedFile = File(versionFolder, "mappings.tiny")
 
-        if (!versionFolder.exists()) {
-            versionFolder.mkdirs()
-        }
+        if (!versionFolder.exists()) { versionFolder.mkdirs() }
 
         // Download the ZIP file if the extracted file doesn't exist
         if (!extractedFile.exists()) {
@@ -105,11 +107,15 @@ class MappingLoader(private val version: String) {
             }
 
             override fun pushClass(getter: MappingGetter) {
+                val yarnName = getter.get(1).replace('/', '.')
+                val obfName = getter.get(0).replace('/', '.')
+
                 val mapping = ClassMapping(
                     names = getter.getRawNames(),
                     comment = lastPushedComment
                 )
-                classMappings[getter.get(1).replace('/', '.')] = mapping
+                classMappings[yarnName] = mapping
+                obfuscatedToYarn[obfName] = yarnName  // Populate reverse map
                 currentClass = mapping
                 stack.addLast(mapping)
                 lastPushedComment = null
@@ -183,20 +189,36 @@ class MappingLoader(private val version: String) {
         })
     }
 
-    // Name Strings
-    fun getClass(mappedName: String): String? =
-        classMappings[mappedName]?.obfuscatedName
+    // Class resolution
+    fun getClass(mappedName: String): String? = classMappings[mappedName]?.obfuscatedName
+    fun getYarnClassName(obfuscatedName: String): String? = obfuscatedToYarn[obfuscatedName]
 
-    fun getMethod(className: String, methodName: String): String? =
-        classMappings[className]?.methods?.get(methodName)?.obfuscatedName
+    // Method resolution
+    fun getMethod(className: String, methodName: String): String? {
+        val direct = classMappings[className]?.methods?.get(methodName)?.obfuscatedName
+        if (direct != null) return direct
 
-    fun getField(className: String, fieldName: String): String? =
-        classMappings[className]?.fields?.get(fieldName)?.obfuscatedName
+        val yarnName = obfuscatedToYarn[className] ?: return null
+        return classMappings[yarnName]?.methods?.get(methodName)?.obfuscatedName
+    }
+
+    fun getMethodReverse(obfClassName: String, obfMethodName: String): String? {
+        val yarnClassName = getYarnClassName(obfClassName) ?: return null
+        return classMappings[yarnClassName]?.methods?.entries
+            ?.find { it.value.obfuscatedName == obfMethodName }
+            ?.key
+    }
+
+    // Field resolution
+    fun getField(className: String, fieldName: String): String? {
+        val yarnName = obfuscatedToYarn[className] ?: className
+        return classMappings[yarnName]?.fields?.get(fieldName)?.obfuscatedName
+    }
 
     // Full mapping objects
     fun getClassMapping(mappedName: String): ClassMapping? = classMappings[mappedName]
     fun getMethodMapping(className: String, methodName: String): MethodMapping? =
-        classMappings[className]?.methods?.get(methodName)
+        classMappings[obfuscatedToYarn[className] ?: className]?.methods?.get(methodName)
     fun getFieldMapping(className: String, fieldName: String): FieldMapping? =
-        classMappings[className]?.fields?.get(fieldName)
+        classMappings[obfuscatedToYarn[className] ?: className]?.fields?.get(fieldName)
 }
