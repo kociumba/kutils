@@ -27,19 +27,39 @@ class KutilsClassLoader(
 
             val cls = if (debug) {
                 modClassLoader.loadClass(inputName).also {
-                    mappingLoader.getClass(inputName)?.let { resolved ->
+                    mappingLoader.getObfuscatedClassName(inputName)?.let { resolved ->
                         log.info("Debug: resolved $inputName -> $resolved")
                     }
                 }
             } else {
-                mappingLoader.getClass(inputName)
+                mappingLoader.getObfuscatedClassName(inputName)
                     ?.replace('/', '.')
                     ?.let { modClassLoader.loadClass(it) }
                     ?: modClassLoader.loadClass(inputName)
             }
 
-            val coerced = CoerceJavaToLua.coerce(cls)
+            // Try to create an instance if possible
+            val instance = try {
+                if (!Modifier.isAbstract(cls.modifiers) && !cls.isInterface) {
+                    // Find the no-arg constructor
+                    val constructor = cls.getDeclaredConstructor()
+                    constructor.isAccessible = true
+                    constructor.newInstance()
+                } else {
+                    null
+                }
+            } catch (e: Exception) {
+                log.debug("Could not instantiate ${cls.name}, falling back to class reference", e)
+                null
+            }
+
+            // Coerce either the instance or the class itself
+            val coerced = CoerceJavaToLua.coerce(instance ?: cls)
             val meta = LuaTable()
+
+            // Store both the class and instance (if any) in the metatable
+            meta.set("__class", CoerceJavaToLua.coerce(cls))
+            instance?.let { meta.set("__instance", CoerceJavaToLua.coerce(it)) }
 
             meta.set(INDEX, object : LuaFunction() {
                 override fun call(self: LuaValue, key: LuaValue): LuaValue {
@@ -53,30 +73,21 @@ class KutilsClassLoader(
                 }
             })
 
-            val methodMeta = LuaTable()
-            methodMeta.set("__call", object : LuaFunction() {
-                override fun call(methodWrapper: LuaValue): LuaValue {
-                    return invokeMethodWrapper(methodWrapper, emptyArray())
+            // Add special methods to access static functionality when needed
+            meta.set("static", object : LuaFunction() {
+                override fun call(self: LuaValue): LuaValue {
+                    return CoerceJavaToLua.coerce(cls)
+                }
+            })
+
+            // Add constructor access
+            meta.set("new", object : LuaFunction() {
+                override fun call(): LuaValue {
+                    return handleConstructor(cls)
                 }
 
-
-                override fun call(methodWrapper: LuaValue, arg1: LuaValue): LuaValue {
-                    return invokeMethodWrapper(methodWrapper, arrayOf(arg1))
-                }
-
-                override fun call(methodWrapper: LuaValue, arg1: LuaValue, arg2: LuaValue): LuaValue {
-                    return invokeMethodWrapper(methodWrapper, arrayOf(arg1, arg2))
-                }
-
-                private fun invokeMethodWrapper(wrapper: LuaValue, args: Array<LuaValue>): LuaValue {
-                    val self = wrapper.get("self")
-                    val methodName = resolveRuntimeMethodName(
-                        self = self,
-                        luaMethodName = wrapper.get("method").checkjstring()
-                    )
-
-                    val javaArgs = args.map { CoerceLuaToJava.coerce(it, Any::class.java) }.toTypedArray()
-                    return invokeJavaMethod(self, methodName, javaArgs)
+                override fun call(arg: LuaValue): LuaValue {
+                    return handleConstructor(cls, arg)
                 }
             })
 
@@ -89,60 +100,69 @@ class KutilsClassLoader(
         }
     }
 
-    private fun resolveRuntimeMethodName(self: LuaValue, luaMethodName: String): String {
-        val javaClass = when (val obj = self.touserdata()) {
-            is Class<*> -> obj
-            else -> obj?.javaClass ?: throw LuaError("Invalid method call on null")
-        }
-
-        return if (debug) luaMethodName else {
-            val yarnClassName = mappingLoader.getYarnClassName(javaClass.name)
-                ?: throw LuaError("No Yarn mapping for ${javaClass.name}")
-
-            mappingLoader.getMethod(yarnClassName, luaMethodName)
-                ?: throw LuaError("No method mapping for $luaMethodName in $yarnClassName")
+    private fun handleConstructor(cls: Class<*>, vararg args: LuaValue): LuaValue {
+        return try {
+            when {
+                args.size == 1 && args[0].isfunction() && cls == Thread::class.java -> {
+                    val runnable = object : Runnable {
+                        override fun run() {
+                            try {
+                                args[0].checkfunction().call()
+                            } catch (e: Exception) {
+                                if (e !is CustomDebugLib.ScriptInterruptException && e !is InterruptedException) {
+                                    log.error("Error in thread", e)
+                                }
+                            }
+                        }
+                    }
+                    CoerceJavaToLua.coerce(Thread(runnable))
+                }
+                args.isEmpty() -> {
+                    val constructor = cls.getDeclaredConstructor()
+                    constructor.isAccessible = true
+                    CoerceJavaToLua.coerce(constructor.newInstance())
+                }
+                else -> {
+                    // Handle constructor with arguments
+                    val javaArgs = args.map { CoerceLuaToJava.coerce(it, Any::class.java) }.toTypedArray()
+                    val constructor = cls.constructors.find { it.parameterTypes.size == args.size }
+                        ?: throw LuaError("No matching constructor found")
+                    constructor.isAccessible = true
+                    CoerceJavaToLua.coerce(constructor.newInstance(*javaArgs))
+                }
+            }
+        } catch (e: Exception) {
+            log.error("Error creating instance", e)
+            throw LuaError("Failed to create instance: ${e.message}")
         }
     }
 
     private fun invokeJavaMethod(self: LuaValue, luaMethodName: String, args: Array<Any?>): LuaValue {
         val javaObj = self.touserdata()
-
-        // 1. Get the actual target class (MinecraftClient.class)
-        val (targetClass, isStaticCall) = when (javaObj) {
-            is Class<*> -> javaObj to true
-            else -> (javaObj?.javaClass ?: throw LuaError("Method call on null object")) to false
+        val targetClass = when (javaObj) {
+            is Class<*> -> javaObj
+            else -> javaObj?.javaClass ?: throw LuaError("Method call on null object")
         }
 
-        // 2. Resolve Yarn class name for mapping lookup
-        val yarnClassName = mappingLoader.getYarnClassName(targetClass.name) ?: run {
-            log.warn("No Yarn mapping for class ${targetClass.name}")
-            targetClass.name
-        }
-
-        // 3. Translate method name using MappingLoader
-        val runtimeMethodName = if (debug) {
-            luaMethodName
+        // Get the obfuscated method name in production
+        val methodNameToUse = if (!debug) {
+            mappingLoader.getObfuscatedMethod(targetClass.name, luaMethodName)?.also {
+                log.debug("Resolved method mapping: $luaMethodName -> $it")
+            } ?: throw LuaError("No mapping found for method $luaMethodName in class ${targetClass.name}")
         } else {
-            mappingLoader.getMethod(yarnClassName, luaMethodName) ?: run {
-                log.warn("No mapping for method $luaMethodName in class $yarnClassName")
-                luaMethodName
-            }
+            luaMethodName
         }
 
-        log.info("Resolved method $luaMethodName -> $runtimeMethodName in class ${targetClass.name}")
-
-        // 4. Find method with translated name
-        val method = targetClass.methods.find {
-            it.name == runtimeMethodName && matchParameters(it.parameterTypes, args)
-        } ?: throw LuaError("Method $runtimeMethodName not found in ${targetClass.name}")
+        // Find and invoke the method using the correct name
+        val method = targetClass.methods.find { it.name == methodNameToUse }
+            ?: throw LuaError("Method $methodNameToUse not found in ${targetClass.name}")
 
         method.isAccessible = true
 
-        // 5. Invoke with proper context
-        val result = if (Modifier.isStatic(method.modifiers)) {
-            method.invoke(null, *args)
-        } else {
-            method.invoke(javaObj, *args)
+        val result = when {
+            Modifier.isStatic(method.modifiers) -> method.invoke(null, *args)
+            javaObj is Class<*> -> method.invoke(null, *args)
+            else -> method.invoke(javaObj, *args)
         }
 
         return CoerceJavaToLua.coerce(result)
@@ -162,17 +182,14 @@ class KutilsClassLoader(
 
         val meta = LuaTable()
         meta.set("__call", object : LuaFunction() {
-            // Handle no-argument calls
             override fun call(wrapper: LuaValue): LuaValue {
                 return invokeMethodWrapper(wrapper, emptyArray())
             }
 
-            // Handle single argument calls
             override fun call(wrapper: LuaValue, arg1: LuaValue): LuaValue {
                 return invokeMethodWrapper(wrapper, arrayOf(arg1))
             }
 
-            // Handle two argument calls
             override fun call(wrapper: LuaValue, arg1: LuaValue, arg2: LuaValue): LuaValue {
                 return invokeMethodWrapper(wrapper, arrayOf(arg1, arg2))
             }
@@ -181,21 +198,7 @@ class KutilsClassLoader(
                 val self = wrapper.get("self")
                 val methodName = wrapper.get("method").checkjstring()
                 val javaArgs = args.map { CoerceLuaToJava.coerce(it, Any::class.java) }.toTypedArray()
-
-                // Handle static methods by filtering out self argument
-                val targetSelf = if (self.touserdata() is Class<*>) {
-                    // Static method call - ignore self argument from colon syntax
-                    javaArgs.drop(1).toTypedArray()
-                } else {
-                    javaArgs
-                }
-
-                return try {
-                    val result = invokeJavaMethod(self, methodName, targetSelf)
-                    CoerceJavaToLua.coerce(result)
-                } catch (e: Exception) {
-                    throw LuaError("Method call failed: ${e.message}")
-                }
+                return invokeJavaMethod(self, methodName, javaArgs)
             }
         })
 
@@ -211,53 +214,6 @@ class KutilsClassLoader(
         } catch (e: Exception) {
             throw LuaError("Method call failed: ${e.message}")
         }
-    }
-
-    private fun invokeMethod(self: LuaValue, methodName: String): Any? {
-        try {
-            val obj = self.touserdata()
-            if (obj != null) {
-                val cls = when (obj) {
-                    is Class<*> -> obj
-                    else -> obj.javaClass
-                }
-
-                log.info("Attempting method '$methodName' on class: ${cls.name}")
-
-                val yarnClassName = mappingLoader.getYarnClassName(cls.name).also {
-                    log.info("Yarn class name resolved: ${it ?: "NOT FOUND"}")
-                }
-
-                val methodToUse = if (debug) {
-                    methodName.also {
-                        log.info("Dev mode using direct method name: $it")
-                    }
-                } else {
-                    mappingLoader.getMethod(yarnClassName ?: cls.name, methodName).also {
-                        log.info("Prod mode resolved method: ${it ?: "NOT FOUND"}")
-                    } ?: methodName
-                }
-
-                log.info("Final method name being used: $methodToUse")
-                log.info("Available methods: ${cls.methods.joinToString { it.name }}")
-
-                val method = cls.methods.find { it.name == methodToUse }
-                if (method != null) {
-                    method.isAccessible = true
-                    return when {
-                        Modifier.isStatic(method.modifiers) -> method.invoke(null)
-                        obj is Class<*> -> method.invoke(null)
-                        else -> method.invoke(obj)
-                    }
-                } else {
-                    log.warn("Method $methodToUse not found in class ${cls.name} (Yarn: $yarnClassName)")
-                }
-            }
-        } catch (e: Exception) {
-            log.error("Error invoking method $methodName", e)
-            throw LuaError("Failed to invoke method $methodName: ${e.message}")
-        }
-        return null
     }
 
     private fun handleConstructor(cls: Class<*>, arg: LuaValue): LuaValue {

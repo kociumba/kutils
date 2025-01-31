@@ -98,21 +98,22 @@ class ModuleManager(private val client: MinecraftClient) {
 
             try {
                 globals?.let { g ->
-                    try {
-                        // these are not really needed since we provide basically all the infrastructure ourselves
-                        val luaKotlinLibClass = Class.forName("com.github.only52607.luakt.lib.LuaKotlinLib")
-                        val luaKotlinExLibClass = Class.forName("com.github.only52607.luakt.lib.LuaKotlinExLib")
-
-                        g.load(luaKotlinLibClass.getDeclaredConstructor().newInstance() as LuaFunction)
-                        g.load(luaKotlinExLibClass.getDeclaredConstructor().newInstance() as LuaFunction)
-                    } catch (e: Exception) {
-                        log.error("Failed to find class definitions for luakt libs")
-                    }
+//                    try {
+//                        // these are not really needed since we provide basically all the infrastructure ourselves
+//                        val luaKotlinLibClass = Class.forName("com.github.only52607.luakt.lib.LuaKotlinLib")
+//                        val luaKotlinExLibClass = Class.forName("com.github.only52607.luakt.lib.LuaKotlinExLib")
+//
+//                        g.load(luaKotlinLibClass.getDeclaredConstructor().newInstance() as LuaFunction)
+//                        g.load(luaKotlinExLibClass.getDeclaredConstructor().newInstance() as LuaFunction)
+//                    } catch (e: Exception) {
+//                        log.error("Failed to find class definitions for luakt libs")
+//                    }
 
                     // the aforementioned our infrastructure 😎
                     KutilsClassLoader.register(g, Kutils::class.java.classLoader, mappingLoader)
                     LuaLogger.register(g)
                     MainThreadExecutor.register(g, client)
+                    LuaInspector.register(g, mappingLoader)
 
                     g.set("onDisable", object : OneArgFunction() {
                         override fun call(callback: LuaValue): LuaValue {
@@ -133,6 +134,7 @@ class ModuleManager(private val client: MinecraftClient) {
                 }
             } catch (e: Exception) {
                 log.error("Failed to initialize module context for ${metadata.fileName}: ${e.message}")
+                mappingLoader.dumpMappings() // dump what we extracted, comment when done debugging
             }
         }
 
