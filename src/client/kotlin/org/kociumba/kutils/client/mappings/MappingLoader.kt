@@ -55,14 +55,19 @@ data class ParameterMapping(
 ) : MappingElement
 
 class MappingLoader(private val version: String) {
-    private val mappingsUrl = "https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/mappings-$version.zip"
+    private val mappingsUrl =
+        "https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/mappings-$version.zip"
+
     // Bidirectional class name mappings
     private val obfToYarn = mutableMapOf<String, String>()
     private val yarnToObf = mutableMapOf<String, String>()
 
     // Method mappings with both obfuscated and deobfuscated names
     private data class MethodPair(val obfuscated: String, val yarn: String, val descriptor: String)
-    private val methodMappings = mutableMapOf<String, MutableMap<String, MethodPair>>()
+
+    private val methodMappings = mutableMapOf<String, MutableMap<MethodKey, MethodPair>>()
+
+    private data class MethodKey(val name: String, val descriptor: String)
 
     private lateinit var metadata: TinyMetadata
 
@@ -74,7 +79,9 @@ class MappingLoader(private val version: String) {
         val zipFile = File("mods/kutils/mappings/mappings-$version.zip")
         val extractedFile = File(versionFolder, "mappings.tiny")
 
-        if (!versionFolder.exists()) { versionFolder.mkdirs() }
+        if (!versionFolder.exists()) {
+            versionFolder.mkdirs()
+        }
 
         // Download the ZIP file if the extracted file doesn't exist
         if (!extractedFile.exists()) {
@@ -114,15 +121,31 @@ class MappingLoader(private val version: String) {
             }
 
             override fun pushClass(getter: MappingGetter) {
-                val obfName = getter.get(0).replace('/', '.')
-                val yarnName = getter.get(1).replace('/', '.')
+                val rawObfName = getter.get(0)
+                val rawYarnName = getter.get(1)
 
-                obfToYarn[obfName] = yarnName
-                yarnToObf[yarnName] = obfName
-                methodMappings[obfName] = mutableMapOf()
-                currentClass = obfName
+                // Check if this is an inner class
+                if (rawObfName.contains("$")) {
+                    // This is an inner class, get the outer class name
+                    val outerObfName = rawObfName.substringBefore('$')
+                    // Store the full name for the inner class separately
+                    val fullObfName = rawObfName.replace('/', '.')
+                    val fullYarnName = rawYarnName.replace('/', '.')
 
-//                log.debug("Loaded class mapping: $obfName -> $yarnName")
+                    // Store inner class mapping separately
+                    obfToYarn[fullObfName] = fullYarnName
+                    yarnToObf[fullYarnName] = fullObfName
+                    methodMappings[fullObfName] = mutableMapOf()
+                } else {
+                    // This is a regular class
+                    val obfName = rawObfName.replace('/', '.')
+                    val yarnName = rawYarnName.replace('/', '.')
+
+                    obfToYarn[obfName] = yarnName
+                    yarnToObf[yarnName] = obfName
+                    methodMappings[obfName] = mutableMapOf()
+                    currentClass = obfName
+                }
             }
 
             override fun pushMethod(getter: MappingGetter, descriptor: String) {
@@ -132,12 +155,10 @@ class MappingLoader(private val version: String) {
                     val methodPair = MethodPair(obfName, yarnName, descriptor)
 
                     val classMethods = methodMappings[className] ?: mutableMapOf()
-                    // Store mappings both ways for easier lookup
-                    classMethods[yarnName] = methodPair
-                    classMethods[obfName] = methodPair
+                    // Store with descriptor in the key
+                    classMethods[MethodKey(yarnName, descriptor)] = methodPair
+                    classMethods[MethodKey(obfName, descriptor)] = methodPair
                     methodMappings[className] = classMethods
-
-//                    log.debug("Loaded method mapping for $className: $obfName -> $yarnName")
                 }
             }
 
@@ -186,7 +207,9 @@ class MappingLoader(private val version: String) {
                             currentClass = null
                             currentMethod = null
                         }
-                        else -> { /* no state change needed */ }
+
+                        else -> { /* no state change needed */
+                        }
                     }
                     remainingCount--
                 }
@@ -196,29 +219,53 @@ class MappingLoader(private val version: String) {
     }
 
     // Class resolution
-    fun getYarnClassName(obfuscatedName: String): String? = obfToYarn[obfuscatedName]
-    fun getObfuscatedClassName(yarnName: String): String? = yarnToObf[yarnName]
+    fun getYarnClassName(obfuscatedName: String): String? {
+        obfToYarn[obfuscatedName]?.let { return it }
 
-    fun getObfuscatedMethod(className: String, methodName: String): String? {
-        // First try with the class name as-is (might be already obfuscated)
-        val methods = methodMappings[className]
-        if (methods != null) {
-            return methods[methodName]?.obfuscated
+        if (!obfuscatedName.contains('$')) {
+            return obfToYarn.entries.firstOrNull {
+                it.key.substringBefore('$') == obfuscatedName
+            }?.value
         }
-
-        // If not found, try looking up the obfuscated class name first
-        val obfClassName = yarnToObf[className] ?: return null
-        return methodMappings[obfClassName]?.get(methodName)?.obfuscated
+        return null
     }
 
-    fun getDeobfuscatedMethod(className: String, methodName: String): String? {
-        val methods = methodMappings[className]
-        if (methods != null) {
-            return methods[methodName]?.yarn
+    fun getObfuscatedClassName(yarnName: String): String? {
+        // First try exact match
+        yarnToObf[yarnName]?.let { return it }
+
+        // If not found and doesn't contain $, try to find base class
+        if (!yarnName.contains('$')) {
+            return yarnToObf.entries.firstOrNull {
+                it.key.substringBefore('$') == yarnName
+            }?.value
         }
 
-        val yarnClassName = obfToYarn[className] ?: return null
-        return methodMappings[yarnClassName]?.get(methodName)?.yarn
+        return null
+    }
+
+    fun getObfuscatedMethod(className: String, methodName: String, descriptor: String? = null): String? {
+        val methods = methodMappings[className] ?: methodMappings[yarnToObf[className]] ?: return null
+
+        return if (descriptor != null) {
+            // If we have a descriptor, look up exact match
+            methods[MethodKey(methodName, descriptor)]?.obfuscated
+        } else {
+            // If no descriptor, try to find any method with matching name
+            methods.entries.firstOrNull { it.key.name == methodName }?.value?.obfuscated
+        }
+    }
+
+    fun getDeobfuscatedMethod(className: String, methodName: String, descriptor: String? = null): String? {
+        val methods = methodMappings[className] ?: methodMappings[yarnToObf[className]] ?: return null
+
+        return if (descriptor != null) {
+            // If we have a descriptor, look up exact match
+            methods[MethodKey(methodName, descriptor)]?.yarn
+        } else {
+            // If no descriptor, try to find any method with matching name
+            methods.entries.firstOrNull { it.key.name == methodName }?.value?.yarn
+        }
     }
 
     fun dumpMappings() {

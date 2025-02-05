@@ -50,6 +50,7 @@ repositories {
 //    maven(url = "https://repo.alignedcookie88.com/repository/maven-public/")
     maven(url = "https://jitpack.io")
     maven(url = "https://repo.hypixel.net/repository/Hypixel/")
+    maven(url = "https://maven.terraformersmc.com/")
 
     maven {
         url = uri("https://maven.pkg.github.com/kociumba/imgui-mc")
@@ -98,6 +99,8 @@ dependencies {
     implementation("com.github.only52607.luakt:luakt-core:2.6.1")
     implementation("com.github.only52607.luakt:luakt-extension:2.6.1")
     implementation(include("org.luaj:luaj-jse:3.0.1")!!)
+
+    modCompileOnly("com.terraformersmc:modmenu:${project.property("modmenu_version")}")
 
 }
 

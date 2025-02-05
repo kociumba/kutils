@@ -25,6 +25,9 @@
     ],
     "main": [
       "org.kociumba.kutils.Kutils"
+    ],
+    "modmenu": [
+      "org.kociumba.kutils.client.compat.ModMenu.KutilsModMenuAPIImpl"
     ]
   },
   "mixins": [
