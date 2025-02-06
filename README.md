@@ -1,5 +1,10 @@
 # kutils
 
+![GitHub branch check runs](https://img.shields.io/github/check-runs/kociumba/kutils/main)
+![Modrinth Downloads](https://img.shields.io/modrinth/dt/kutils?label=modrinth%20downloads)
+![Modrinth Game Versions](https://img.shields.io/modrinth/game-versions/kutils)
+![Modrinth Followers](https://img.shields.io/modrinth/followers/kutils)
+
 A collection of qol features
 and tweaks that I am used to from 1.8.9 but for 1.21+
 with some unique features for hypixel skyblock.
