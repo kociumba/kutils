@@ -38,9 +38,6 @@ using a separate companion app hosted in minecraft more than a classic mod.
 In fact, you can even drag the custom window outside the minecraft window that hosts them, 
 which could be usefull if you don't play in fullscreen or have more than 1 monitor.
 
-But this is only true for the bazaar ui and performance overlay, every other qol feature
-seamlessly integrates with minecraft through an in game config screen and keybinds.
-
 > [!WARNING]
 > If any other mod provides the same features as kutils, they may be incompatible.
 > But most of the time, features should not conflict or can be turned off.
