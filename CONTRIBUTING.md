@@ -28,7 +28,7 @@ kutils is a **Kotlin/Java** project and uses **Gradle** for building and depende
        export GITHUB_TOKEN="your-personal-access-token"
        ```
      - **Windows (PowerShell):**
-       ```powershell
+       ```powershel
        $env:GITHUB_ACTOR="your-username"
        $env:GITHUB_TOKEN="your-personal-access-token"
        ```
