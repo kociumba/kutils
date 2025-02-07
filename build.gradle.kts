@@ -83,7 +83,7 @@ dependencies {
     modImplementation(include("gg.essential:universalcraft-1.21-fabric:371")!!)
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
 
     // would be cool to be able to include it in jar couse of fucked up versioning
     // if not we have to declare dependency on version down like this: "imguimc": "1.21.1-1.0.7"
