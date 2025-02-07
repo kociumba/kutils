@@ -9,6 +9,7 @@ import imgui.extension.implot.flag.ImPlotCol
 import imgui.extension.implot.flag.ImPlotFlags
 import org.kociumba.kutils.client.bazaar.bazaarUI.getRealName
 import org.kociumba.kutils.client.c
+import org.kociumba.kutils.client.imgui.hexToImColor
 import org.kociumba.kutils.client.imgui.spinner
 import org.kociumba.kutils.log
 import java.time.Instant
@@ -69,8 +70,9 @@ data class ImPlotPriceData(
 
 private var fetchStates = mutableMapOf<String, Boolean>()
 private var loadingStates = mutableMapOf<String, Boolean>()
-private var priceDataMap = mutableMapOf<String, ImPlotPriceData>()
+private var priceDataMap = mutableMapOf<String, ImPlotPriceData?>()
 private const val defaultTimeframe = 100L // days
+var errorMessage: String? = null
 
 fun priceGraphWindow(p: Product) {
     val productId = p.product_id
@@ -81,14 +83,33 @@ fun priceGraphWindow(p: Product) {
         loadingStates[productId] = false
     }
 
+
     fun fetchData() {
         fetchStates[productId] = true
         loadingStates[productId] = true
+        errorMessage = null
         log.info("Fetching price graph for $productId")
 
         Thread {
-            priceDataMap[productId] = PriceDataFetcher.fetchPriceData(productId)?.toImPlotData(defaultTimeframe)!!
-            loadingStates[productId] = false
+            try {
+                val fetchedPriceData = PriceDataFetcher.fetchPriceData(productId)
+                if (fetchedPriceData != null) {
+                    priceDataMap[productId] = fetchedPriceData.toImPlotData(defaultTimeframe)
+                } else {
+                    val warnMessage = "No price data received for product ID: $productId."
+                    log.warn(warnMessage)
+                    errorMessage = warnMessage
+                    priceDataMap[productId] = null
+                }
+
+            } catch (e: Exception) {
+                val errorText = "Error fetching price data for $productId. Check console."
+                log.error(errorText, e)
+                errorMessage = errorText
+                priceDataMap[productId] = null
+            } finally {
+                loadingStates[productId] = false
+            }
         }.start()
     }
 
@@ -103,10 +124,23 @@ fun priceGraphWindow(p: Product) {
     if (loadingStates[productId] == true) {
         ImGui.sameLine()
         val buttonHeight = ImGui.getFrameHeight()
-        val radius = buttonHeight / 2 - 1f  // 1 looks the best
-        val thickness = buttonHeight / 7f   // 7 looks the best
+        val radius = buttonHeight / 2 - 1f
+        val thickness = buttonHeight / 7f
         spinner("##s", radius, thickness, ImGui.getColorU32(1f, 1f, 1f, 1f))
     }
+
+
+    if (errorMessage != null) {
+        val errorColor = hexToImColor("#f87171")
+        ImGui.textColored(errorColor.r, errorColor.g, errorColor.b, errorColor.a, errorMessage)
+        return
+    }
+
+    if (priceDataMap[productId] == null) {
+        ImGui.text("Loading data...")
+        return
+    }
+
 
     priceDataMap[productId]?.let { data ->
         var bg = c.mainWindowBackground
@@ -128,9 +162,6 @@ fun priceGraphWindow(p: Product) {
                 data.sellPrices.size,
                 0
             )
-
-//            ImPlot.showMetricsWindow()
-
             // Plot buy prices
             ImPlot.plotLine(
                 "Buy Prices",
@@ -139,11 +170,8 @@ fun priceGraphWindow(p: Product) {
                 data.buyPrices.size,
                 0
             )
-
             ImPlot.endPlot()
             ImPlot.popStyleColor()
         }
-    } ?: run {
-        ImGui.text("Loading data...")
     }
 }

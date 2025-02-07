@@ -1,5 +1,6 @@
 package org.kociumba.kutils.client.bazaar
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
@@ -31,6 +32,7 @@ object PriceDataFetcher {
         ignoreUnknownKeys = true
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     fun fetchPriceData(itemId: String): PriceInfo? {
         try {
             val url = URI("https://pricehistory.notenoughupdates.org?item=${itemId}").toURL()

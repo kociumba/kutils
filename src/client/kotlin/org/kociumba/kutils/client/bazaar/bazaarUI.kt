@@ -153,22 +153,27 @@ object bazaarUI : ImGuiScreen(Text.literal("BazaarUI"), true) {
                         try {
                             log.info("Getting bazaar data...")
 //                            throw Exception("test error")
-                            var b: Bazaar
-                            var i: Items
+//                            var b: Bazaar
+//                            var i: Items
                             status.fetching = true
                             Thread {
-                                b = BazaarAPI.getBazaar()
-                                i = ItemsAPI.getItems()
+                                try {
+                                    var b: Bazaar
+                                    var i: Items
+                                    b = BazaarAPI.getBazaar()
+                                    i = ItemsAPI.getItems()
 
-                                products = emptyMap()
+                                    products = emptyMap()
+                                    products = b.products
+                                    items = i.items.associateBy { item -> item.id }
 
-                                products = b.products
-
-                                // map in game names to ids
-                                items = i.items.associateBy { item -> item.id }
-
-                                status.fetching = false
-                                log.info("Got ${products.size} products")
+                                    status.fetching = false
+                                    log.info("Got ${products.size} products")
+                                } catch (e: Exception) { // CATCH ERRORS INSIDE THREAD
+                                    log.error("Error fetching bazaar data in thread", e)
+                                    error = BazaarRenderError(e, "Error fetching bazaar data. See console for details.")
+                                    status.fetching = false
+                                }
                             }.start()
                         } catch (e: Exception) {
                             log.error("Something went wrong while filtering the bazaar data", e)
