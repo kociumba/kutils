@@ -2,8 +2,6 @@ name: Build kutils for testing
 
 on:
   push:
-    branches:
-      - *
   pull_request:
     branches:
       - main
