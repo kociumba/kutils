@@ -10,6 +10,7 @@
     "ChatHudAccessor",
     "ChatHudMixin",
     "ClientPlayerEntityMixin",
+    "ClientPlayNetworkHandlerMixin",
     "ClientWorldMixin",
     "ClientWorldPropertiesMixin",
     "DoubleSliderCallbacksMixin",
@@ -20,5 +21,8 @@
   ],
   "injectors": {
     "defaultRequire": 1
-  }
+  },
+  "mixins": [
+    "ClientConnectionMixin"
+  ]
 }

@@ -11,6 +11,7 @@ import net.minecraft.client.MinecraftClient
 import org.kociumba.kutils.client.bazaar.WeightEdit
 import org.kociumba.kutils.client.chat.ChatImageUI
 import org.kociumba.kutils.client.hud.hud
+import org.kociumba.kutils.client.hud.networkingHud
 import org.kociumba.kutils.client.hud.performanceHud
 import xyz.breadloaf.imguimc.Imguimc
 import java.awt.Color
@@ -148,6 +149,15 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
 
     @Property(
         type = PropertyType.SWITCH,
+        name = "networking hud",
+        description = "display a hud with info about the current server and client networking, like TPS",
+        category = "rendering",
+        subcategory = "utils",
+    )
+    var displayNetworkingHud: Boolean = false
+
+    @Property(
+        type = PropertyType.SWITCH,
         name = "disable block breaking particles",
         description = "prevents block breaking particles from being rendered",
         category = "rendering",
@@ -222,8 +232,8 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     var hudIsDraggable: Boolean = true
 
     /**
-      * hidden couse of the theme section
-      */
+     * hidden couse of the theme section
+     */
     @Property(
         type = PropertyType.PERCENT_SLIDER,
         name = "main theme background opacity",
@@ -244,14 +254,14 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     var removeSelfieCamera: Boolean = true
 
     /**
-      * Theme customisation
-      *
-      * user colors and values
-      */
+     * Theme customisation
+     *
+     * user colors and values
+     */
 
     /**
-      * options related to the imgui theme
-      */
+     * options related to the imgui theme
+     */
     @Property(
         type = PropertyType.COLOR,
         name = "window background",
@@ -284,8 +294,8 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
 //    var childBackground = Color(0.07f, 0.07f, 0.09f, 1.00f)
 
     /**
-      * options related to the bazaar display itself
-      */
+     * options related to the bazaar display itself
+     */
     @Property(
         type = PropertyType.COLOR,
         name = "product ID color",
@@ -460,6 +470,14 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
             }
         }
 
+        registerListener(clazz.getDeclaredField("displayNetworkingHud")) { value: Boolean ->
+            if (value) {
+                Imguimc.pushRenderable(networkingHud)
+            } else {
+                Imguimc.pullRenderable(networkingHud)
+            }
+        }
+
         registerListener(clazz.getDeclaredField("displayHud")) { value: Boolean ->
             if (value) {
                 Imguimc.pushRenderable(hud)
@@ -499,10 +517,10 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
 
         registerListener(clazz.getDeclaredField("saabMode")) { value: Boolean ->
             if (value) {
-                 Imguimc.pushRenderable(saab)
-             } else {
-                 Imguimc.pullRenderable(saab)
-             }
+                Imguimc.pushRenderable(saab)
+            } else {
+                Imguimc.pullRenderable(saab)
+            }
         }
 
         addDependency(clazz.getDeclaredField("damageTintColor"), clazz.getDeclaredField("shouldTintDamage"))

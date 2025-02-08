@@ -25,6 +25,7 @@ import org.kociumba.kutils.client.chat.ChatImageUI
 import org.kociumba.kutils.client.chat.registerChatMessageHandler
 import org.kociumba.kutils.client.funny.SaabMode
 import org.kociumba.kutils.client.hud.hud
+import org.kociumba.kutils.client.hud.networkingHud
 import org.kociumba.kutils.client.hud.performanceHud
 import org.kociumba.kutils.client.lua.LuaEditor
 import org.kociumba.kutils.client.lua.ModuleManager
@@ -46,6 +47,7 @@ var displayNotes = false
 var client: MinecraftClient = MinecraftClient.getInstance()
 var chatHud: ChatHud? = null
 var isOnHypixel = false
+
 //var loacationPacket: ClientboundLocationPacket? = null
 //val LUA_GLOBAL: Globals = JsePlatform.standardGlobals()
 lateinit var scriptManager: ModuleManager
@@ -189,6 +191,10 @@ class KutilsClient : ClientModInitializer {
             Imguimc.pushRenderable(performanceHud)
         }
 
+        if (c.displayNetworkingHud) {
+            Imguimc.pushRenderable(networkingHud)
+        }
+
         if (c.displayHud) {
             Imguimc.pushRenderable(hud)
         }
@@ -205,18 +211,19 @@ class KutilsClient : ClientModInitializer {
 
         // TODO: actually find a font that works here.
         //  labels: imgui issue
-        var fontLoader = InitCallback { io: ImGuiIO, fontAtlas: ImFontAtlas, fontConfig: ImFontConfig, glyphRanges: ShortArray  ->
-            // loads custom font
-            fontConfig.oversampleH = 16
-            fontConfig.oversampleV = 16
+        var fontLoader =
+            InitCallback { io: ImGuiIO, fontAtlas: ImFontAtlas, fontConfig: ImFontConfig, glyphRanges: ShortArray ->
+                // loads custom font
+                fontConfig.oversampleH = 16
+                fontConfig.oversampleV = 16
 //            io.setFontDefault(fontAtlas.addFontFromFileTTF(fontPath.toAbsolutePath().toString(), 16f, fontConfig))
-            fontAtlas.addFontFromFileTTF(fontPath.toAbsolutePath().toString(), 14f, fontConfig, glyphRanges)
+                fontAtlas.addFontFromFileTTF(fontPath.toAbsolutePath().toString(), 14f, fontConfig, glyphRanges)
 
-            // additional init stuff
-            io.fontAllowUserScaling = true
-            io.configWindowsMoveFromTitleBarOnly = false
-            log.info("custom font loaded successfully")
-        }
+                // additional init stuff
+                io.fontAllowUserScaling = true
+                io.configWindowsMoveFromTitleBarOnly = false
+                log.info("custom font loaded successfully")
+            }
         ImguiLoader.initCallback = fontLoader
 
         ImguiLoader.iniFileName = "config/imgui/kutils.ini"
