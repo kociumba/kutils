@@ -15,4 +15,4 @@ Versions containing only a patch or a fix will have a suffix -p1 (p = patch, 1 =
 ## Reporting a Vulnerability or a Bug
 
 The prefered way to report bugs or vulnerabilities is throught github issues if the bug is not critical or easely exploitable.
-Otherwise feel free to reach me through my [discord server](https://inv.wtf/gabagool), twitter(@kociumba) or send me an email at kociumba1@gmail.com
+Otherwise feel free to reach me through my [discord server](https://inv.wtf/gabagool), twitter(@kociumba) or send me an email at <kociumba1@gmail.com>
