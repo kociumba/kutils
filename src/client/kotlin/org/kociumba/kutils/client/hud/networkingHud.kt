@@ -4,6 +4,7 @@ import imgui.ImGui
 import imgui.flag.ImGuiCond
 import imgui.flag.ImGuiWindowFlags
 import org.kociumba.kutils.client.c
+import org.kociumba.kutils.client.client
 import org.kociumba.kutils.client.imgui.ImGuiKutilsTransparentTheme
 import org.kociumba.kutils.client.imgui.coloredText
 import org.kociumba.kutils.client.networking.TPSTracker
@@ -35,6 +36,15 @@ object networkingHud : Renderable {
         }
     }
 
+    fun getPINGColor(ping: Int): String {
+        return when {
+            ping < 50 -> "#00FF00" // Green
+            ping < 100 -> "#FFFF00" // Yellow
+            ping < 200 -> "#FFA500" // Orange
+            else -> "#FF0000" // Red:
+        }
+    }
+
     override fun render() {
         if (firstRun) {
             init()
@@ -43,6 +53,13 @@ object networkingHud : Renderable {
 
         val tps = tracker.getTickRate()
         val tpsColor = getTPSColor(tps)
+        val apr: Float = client.networkHandler?.connection?.averagePacketsReceived ?: 0.0f
+        val aps: Float = client.networkHandler?.connection?.averagePacketsSent ?: 0.0f
+        val uuid = client.player?.uuid
+        val player = client.networkHandler?.getPlayerListEntry(uuid)
+        val ping =
+            player?.latency ?: 0 // ok so this works but, hypixel always seems to report 1 ping after changing servers ?
+        val pingColor = getPINGColor(ping)
 
         ImGui.setNextWindowPos(15.0f, 45.0f, ImGuiCond.FirstUseEver)
 
@@ -68,9 +85,15 @@ object networkingHud : Renderable {
             )
         ) {
 
-            ImGui.text("TPS: ")
+            ImGui.text("ping: ")
+            ImGui.sameLine()
+            coloredText(pingColor, "$ping")
+
+            ImGui.text("tps: ")
             ImGui.sameLine()
             coloredText(tpsColor, "%.2f%%".format(tps))
+
+            ImGui.text("apr/aps: %.2f/%.2f".format(apr, aps))
 
             ImGui.end()
         }
