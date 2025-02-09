@@ -10,6 +10,8 @@ import org.kociumba.kutils.client.imgui.coloredText
 import org.kociumba.kutils.client.networking.TPSTracker
 import xyz.breadloaf.imguimc.interfaces.Renderable
 import xyz.breadloaf.imguimc.interfaces.Theme
+// TODO: need to investigate this to see if it can get ping properly
+import net.minecraft.network.packet.PingPackets
 
 object networkingHud : Renderable {
     fun init() {
@@ -55,11 +57,12 @@ object networkingHud : Renderable {
         val tpsColor = getTPSColor(tps)
         val apr: Float = client.networkHandler?.connection?.averagePacketsReceived ?: 0.0f
         val aps: Float = client.networkHandler?.connection?.averagePacketsSent ?: 0.0f
-        val uuid = client.player?.uuid
-        val player = client.networkHandler?.getPlayerListEntry(uuid)
-        val ping =
-            player?.latency ?: 0 // ok so this works but, hypixel always seems to report 1 ping after changing servers ?
-        val pingColor = getPINGColor(ping)
+//        val uuid = client.player?.uuid
+//        val player = client.networkHandler?.getPlayerListEntry(uuid)
+//        val ping =
+//            player?.latency
+//                ?: 0 // ok so hypixel spoofs ping to 1ms for whatever reason, so i think the only safe solution is to send the 1.20+ ping packets ?
+//        val pingColor = getPINGColor(ping)
 
         ImGui.setNextWindowPos(15.0f, 45.0f, ImGuiCond.FirstUseEver)
 
@@ -85,9 +88,9 @@ object networkingHud : Renderable {
             )
         ) {
 
-            ImGui.text("ping: ")
-            ImGui.sameLine()
-            coloredText(pingColor, "$ping")
+//            ImGui.text("ping: ")
+//            ImGui.sameLine()
+//            coloredText(pingColor, "$ping")
 
             ImGui.text("tps: ")
             ImGui.sameLine()
