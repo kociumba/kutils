@@ -80,14 +80,15 @@ object performanceHud : Renderable {
             windowFlags = windowFlags or ImGuiWindowFlags.NoBackground
         }
 
-        ImGui.begin(
-            "Performance Metrics",
-            windowFlags
-        )
+        if (ImGui.begin(
+                "Performance Metrics",
+                windowFlags
+            )
+        ) {
 
-        ImGui.text("CPU Load: ")
-        ImGui.sameLine()
-        coloredText(cpuColor,"%.2f%%".format(cpuLoad) + "%")
+            ImGui.text("CPU Load: ")
+            ImGui.sameLine()
+            coloredText(cpuColor, "%.2f%%".format(cpuLoad) + "%")
 
 //        ImGui.text("GPU Load: ")
 //        ImGui.sameLine()
@@ -95,13 +96,14 @@ object performanceHud : Renderable {
 
 //        ImGui.text("Used Memory: %d MB".format(totalMemory))
 
-        ImGui.text("Used Memory: ")
-        ImGui.sameLine()
-        coloredText(memoryColor,"%.2f%%".format(memoryUsage) + "%")
+            ImGui.text("Used Memory: ")
+            ImGui.sameLine()
+            coloredText(memoryColor, "%.2f%%".format(memoryUsage) + "%")
 
-        ImGui.text("Allocated Memory: %d MB / %d MB".format(usedMemory, maxMemory))
+            ImGui.text("Allocated Memory: %d MB / %d MB".format(usedMemory, maxMemory))
 
-        ImGui.end()
+            ImGui.end()
+        }
 
 //        ImGui.popFont()
 //        }
