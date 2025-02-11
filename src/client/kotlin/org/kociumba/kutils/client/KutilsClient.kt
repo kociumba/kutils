@@ -19,6 +19,7 @@ import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.hud.ChatHud
 import net.minecraft.client.option.KeyBinding
 import net.minecraft.client.util.InputUtil
+import net.minecraft.util.Util
 import org.kociumba.kutils.client.bazaar.WeightEdit
 import org.kociumba.kutils.client.bazaar.bazaarUI
 import org.kociumba.kutils.client.chat.ChatImageUI
@@ -67,6 +68,7 @@ class KutilsClient : ClientModInitializer {
     var loadedOptions = false
 
     override fun onInitializeClient() {
+        var start = Util.getMeasuringTimeMs()
 
         val open: KeyBinding = KeyBindingHelper.registerKeyBinding(
             KeyBinding(
@@ -311,6 +313,6 @@ class KutilsClient : ClientModInitializer {
 
         log.info(FabricLoader.getInstance().isDevelopmentEnvironment)
 
-        log.info("kutils initial setup done")
+        log.info("kutils initial setup done in ${Util.getMeasuringTimeMs() - start}ms")
     }
 }
