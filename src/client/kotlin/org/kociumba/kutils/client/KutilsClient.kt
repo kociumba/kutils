@@ -3,6 +3,7 @@ package org.kociumba.kutils.client
 //import net.hypixel.modapi.HypixelModAPI
 //import net.hypixel.modapi.packet.impl.clientbound.ClientboundHelloPacket
 //import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket
+import gg.essential.universal.UChat
 import gg.essential.universal.UScreen
 import gg.essential.universal.utils.MCMinecraft
 import imgui.*
@@ -24,6 +25,7 @@ import org.kociumba.kutils.client.bazaar.WeightEdit
 import org.kociumba.kutils.client.bazaar.bazaarUI
 import org.kociumba.kutils.client.chat.ChatImageUI
 import org.kociumba.kutils.client.chat.registerChatMessageHandler
+import org.kociumba.kutils.client.events.GameJoinEvent
 import org.kociumba.kutils.client.funny.SaabMode
 import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.networkingHud
@@ -33,6 +35,7 @@ import org.kociumba.kutils.client.lua.ModuleManager
 import org.kociumba.kutils.client.mappings.MappingLoader
 import org.kociumba.kutils.client.notes.NoteData
 import org.kociumba.kutils.client.notes.NotesScreen
+import org.kociumba.kutils.client.utils.checkKutilsUpdates
 import org.kociumba.kutils.log
 import org.lwjgl.glfw.GLFW
 import xyz.breadloaf.imguimc.Imguimc
@@ -48,6 +51,7 @@ var displayNotes = false
 var client: MinecraftClient = MinecraftClient.getInstance()
 var chatHud: ChatHud? = null
 var isOnHypixel = false
+var modID = "kutils"
 
 //var loacationPacket: ClientboundLocationPacket? = null
 //val LUA_GLOBAL: Globals = JsePlatform.standardGlobals()
@@ -311,7 +315,10 @@ class KutilsClient : ClientModInitializer {
 
         if (c.saabMode) Imguimc.pushRenderable(saab)
 
-        log.info(FabricLoader.getInstance().isDevelopmentEnvironment)
+        log.info("hello are we in the dev department ? ${FabricLoader.getInstance().isDevelopmentEnvironment}")
+
+//        GameJoinEvent.subscribe { checkKutilsUpdates() } // subscribe to any for testing
+        GameJoinEvent.subscribeOnce { checkKutilsUpdates() } // subscribe once for prod
 
         log.info("kutils initial setup done in ${Util.getMeasuringTimeMs() - start}ms")
     }
