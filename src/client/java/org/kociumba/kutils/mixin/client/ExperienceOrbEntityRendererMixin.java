@@ -1,9 +1,6 @@
 package org.kociumba.kutils.mixin.client;
 
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.ExperienceOrbEntityRenderer;
@@ -53,10 +50,10 @@ public abstract class ExperienceOrbEntityRendererMixin extends EntityRenderer {
         matrixStack.scale(customSize, customSize, customSize);
 
         int j = experienceOrbEntity.getOrbSize();
-        float uMin = (float) (j % 4 * 16) / 64.0F;
-        float uMax = (float) (j % 4 * 16 + 16) / 64.0F;
-        float vMin = (float) (j / 4 * 16) / 64.0F;
-        float vMax = (float) (j / 4 * 16 + 16) / 64.0F;
+        float uMin = (float) (j) / 64.0F;
+        float uMax = (float) (j + 16) / 64.0F;
+        float vMin = (float) (j) / 64.0F;
+        float vMax = (float) (j + 16) / 64.0F;
 
         Color customColor = getC().getCustomXpOrbColor();
         int red = customColor.getRed();
@@ -68,7 +65,8 @@ public abstract class ExperienceOrbEntityRendererMixin extends EntityRenderer {
         matrixStack.multiply(this.dispatcher.getRotation());
         matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F));
 
-        VertexConsumer vertexConsumer = vertexConsumerProvider.getBuffer(RenderLayer.getEntityTranslucentEmissive(TEXTURE));
+        // fuck it we ball no emission, but we have alpha
+        VertexConsumer vertexConsumer = vertexConsumerProvider.getBuffer(RenderLayer.getEntityTranslucent(TEXTURE));
         MatrixStack.Entry entry = matrixStack.peek();
 
         renderVertex(vertexConsumer, entry, -0.5F, -0.25F, red, green, blue, alpha, uMin, vMax, light);
@@ -81,7 +79,6 @@ public abstract class ExperienceOrbEntityRendererMixin extends EntityRenderer {
     }
 
     @Unique
-
     private void renderVertex(VertexConsumer vertexConsumer, MatrixStack.Entry entry, float x, float y, int red, int green, int blue, int alpha, float u, float v, int light) {
         vertexConsumer.vertex(entry.getPositionMatrix(), x, y, 0.0F)
                 .color(red, green, blue, alpha)

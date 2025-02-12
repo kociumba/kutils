@@ -458,7 +458,7 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
         category = "rendering",
         subcategory = "entity",
         minF = 0.0f,
-        maxF = 10.0f,
+        maxF = 2.0f,
     )
     var customXpOrbSize: Float = 1.0f
 
