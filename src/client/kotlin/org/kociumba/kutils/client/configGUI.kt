@@ -433,6 +433,35 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
     )
     var shouldSubmitSignsWithEnter: Boolean = true
 
+    @Property(
+        type = PropertyType.SWITCH,
+        name = "use custom xp orbs",
+        description = "use custom xp orb renderer that makes them emissive and allows for custom colors",
+        category = "rendering",
+        subcategory = "entity",
+    )
+    var shouldUsecustomXpOrbs = true
+
+    @Property(
+        type = PropertyType.COLOR,
+        name = "custom xp orb color",
+        description = "the color to use when the custom xp orb renderin is being used",
+        category = "rendering",
+        subcategory = "entity",
+    )
+    var customXpOrbColor: Color = Color(9, 137, 9, 255)
+
+    @Property(
+        type = PropertyType.DECIMAL_SLIDER,
+        name = "custom xp orb size",
+        description = "the size of the custom xp orbs",
+        category = "rendering",
+        subcategory = "entity",
+        minF = 0.0f,
+        maxF = 2.0f,
+    )
+    var customXpOrbSize: Float = 1.0f
+
     init {
         initialize()
 
@@ -525,6 +554,8 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
 
         addDependency(clazz.getDeclaredField("damageTintColor"), clazz.getDeclaredField("shouldTintDamage"))
         addDependency(clazz.getDeclaredField("userTime"), clazz.getDeclaredField("shouldChangeTime"))
+        addDependency(clazz.getDeclaredField("customXpOrbColor"), clazz.getDeclaredField("shouldUsecustomXpOrbs"))
+        addDependency(clazz.getDeclaredField("customXpOrbSize"), clazz.getDeclaredField("shouldUsecustomXpOrbs"))
 
         setCategoryDescription(
             "rendering",

@@ -14,6 +14,7 @@
     "ClientWorldMixin",
     "ClientWorldPropertiesMixin",
     "DoubleSliderCallbacksMixin",
+    "ExperienceOrbEntityRendererMixin",
     "GameOptionsMixin",
     "MinecraftClientMixin",
     "OverlayTextureMixin",
