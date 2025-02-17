@@ -66,6 +66,7 @@ Implemented features:
 - image previews in chat, when hovering over an image
 - submit signs by pressing `enter`
 - custom xp orb rendering to allow customisation
+- tps hud with apr/aps stats
 
 > [!NOTE]
 > Since v0.0.3 any imgui windows from kutils, will save their size, position etc. and restore
