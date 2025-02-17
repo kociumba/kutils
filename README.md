@@ -138,6 +138,10 @@ Most windows can also be docked to each other and collapsed.
     <img src="https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/img_2.png" width="49%" alt="price graphs">
     <img src="https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/img_3.png" width="49%" alt="ui opacity">
 </div>
+<div style="display: flex; justify-content: space-between;">
+  <img src="https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/img_4.png" width="49%" alt="ui opacity">
+  <img src="https://raw.githubusercontent.com/kociumba/kutils/refs/heads/main/assets/img_5.png" width="49%" alt="ui opacity">
+</div>
 
 ## Known issues
 
