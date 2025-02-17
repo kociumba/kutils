@@ -3,13 +3,13 @@ name: Publish kutils
 on:
   push:
     tags: [ "v*" ] # any version tag
-env:                                              
-  MINECRAFT_VERSION: 1.21.1                      
-  JAVA_VERSION: 21   
+env:
+  MINECRAFT_VERSION: 1.21.1
+  JAVA_VERSION: 21
   RELEASE_NAME: kutils
   MODRINTH_TOKEN: ${{ secrets.PUBLISH_MODRINTH_TOKEN }}
   CURSEFORGE_TOKEN: ${{ secrets.PUBLISH_CURSEFORGE_TOKEN }}
-  GITHUB_TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}  
+  GITHUB_TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}
 
 permissions:
   contents: write
@@ -41,6 +41,15 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
         run: ./gradlew clean build
 
+      - name: Store reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports
+          path: |
+            **/build/reports/
+            **/build/test-results/
+
       - name: Get Version from Tag
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
@@ -48,10 +57,10 @@ jobs:
       - name: Publish (CurseForge/Modrinth/GitHub)
         uses: Kir-Antipov/mc-publish@v3.3
         with:
-          curseforge-id: 1156605                                           
+          curseforge-id: 1156605
           curseforge-token: ${{ env.CURSEFORGE_TOKEN }}
           
-          modrinth-id: 4PbTtXAY                                             
+          modrinth-id: 4PbTtXAY
           modrinth-token: ${{ env.MODRINTH_TOKEN }}
           
           github-tag: ${{ github.ref_name }}
@@ -59,8 +68,8 @@ jobs:
           
           files: |
             build/libs/!(*-@(dev|sources|javadoc)).jar
-            
-          name: ${{ env.RELEASE_NAME }}                             
+
+          name: ${{ env.RELEASE_NAME }}
           version: ${{ env.VERSION }}
           version-type: release
           loaders: fabric

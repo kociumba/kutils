@@ -102,6 +102,8 @@ dependencies {
 
     modCompileOnly("com.terraformersmc:modmenu:${project.property("modmenu_version")}")
 
+    testImplementation("net.fabricmc:fabric-loader-junit:${project.property("loader_version")}")
+
 }
 
 
@@ -119,6 +121,10 @@ tasks.processResources {
             "kotlin_loader_version" to project.property("kotlin_loader_version")
         )
     }
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 tasks.withType<JavaCompile>().configureEach {
