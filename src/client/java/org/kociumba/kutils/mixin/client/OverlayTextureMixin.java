@@ -1,20 +1,23 @@
 package org.kociumba.kutils.mixin.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import kotlin.Unit;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import org.kociumba.kutils.KutilsLogger;
-import org.kociumba.kutils.client.OverlayTextureListener;
+import org.kociumba.kutils.client.events.OverlayColorChangeEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
 import java.awt.Color;
+
 import net.minecraft.util.math.ColorHelper;
 
 import static org.kociumba.kutils.client.KutilsClientKt.getC;
@@ -26,7 +29,7 @@ import static org.kociumba.kutils.client.KutilsClientKt.getC;
  */
 @Environment(EnvType.CLIENT)
 @Mixin(OverlayTexture.class)
-public abstract class OverlayTextureMixin implements OverlayTextureListener {
+public abstract class OverlayTextureMixin {
 
     @Shadow
     private NativeImageBackedTexture texture = new NativeImageBackedTexture(16, 16, false);
@@ -34,7 +37,10 @@ public abstract class OverlayTextureMixin implements OverlayTextureListener {
     @Inject(method = "<init>", at = @At("TAIL"))
     private void initCustomOverlay(CallbackInfo ci) {
         this.updateOverlayColor(getC().getDamageTintColor());
-        OverlayTextureListener.Companion.register(this::updateOverlayColor);
+        OverlayColorChangeEvent.Companion.subscribe(event -> {
+            updateOverlayColor(event.getNewColor());
+            return Unit.INSTANCE; // stupid but this is the cost of java interop
+        });
         KutilsLogger.INSTANCE.info("custom overlay texture listener initialized");
     }
 

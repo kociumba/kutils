@@ -26,6 +26,7 @@ import org.kociumba.kutils.client.bazaar.bazaarUI
 import org.kociumba.kutils.client.chat.ChatImageUI
 import org.kociumba.kutils.client.chat.registerChatMessageHandler
 import org.kociumba.kutils.client.events.GameJoinEvent
+import org.kociumba.kutils.client.events.WindowTitleChangedEvent
 import org.kociumba.kutils.client.funny.SaabMode
 import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.networkingHud
@@ -161,7 +162,7 @@ class KutilsClient : ClientModInitializer {
 
             if (!loadedWindow && c.customWindowTitle != "" && MinecraftClient.getInstance().window != null) {
                 loadedWindow = true
-                WindowTitleListener.notifyWindowChanged(c.customWindowTitle)
+                WindowTitleChangedEvent.publish(WindowTitleChangedEvent(c.customWindowTitle))
             }
 
             if (!loadedOptions && c.shouldUseFullbright && MinecraftClient.getInstance().options != null) {
