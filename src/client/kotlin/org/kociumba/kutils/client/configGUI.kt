@@ -10,6 +10,8 @@ import net.fabricmc.api.Environment
 import net.minecraft.client.MinecraftClient
 import org.kociumba.kutils.client.bazaar.WeightEdit
 import org.kociumba.kutils.client.chat.ChatImageUI
+import org.kociumba.kutils.client.events.OverlayColorChangeEvent
+import org.kociumba.kutils.client.events.WindowTitleChangedEvent
 import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.networkingHud
 import org.kociumba.kutils.client.hud.performanceHud
@@ -467,19 +469,19 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
 
         val clazz = javaClass
         registerListener(clazz.getDeclaredField("damageTintColor")) { color: Color ->
-            OverlayTextureListener.notifyColorChanged(color)
+            OverlayColorChangeEvent.publish(OverlayColorChangeEvent(color))
         }
 
         registerListener(clazz.getDeclaredField("shouldTintDamage")) { value: Boolean ->
             if (value) {
-                OverlayTextureListener.notifyColorChanged(this.damageTintColor)
+                OverlayColorChangeEvent.publish(OverlayColorChangeEvent(this.damageTintColor))
             } else {
-                OverlayTextureListener.notifyColorChanged(Color(255, 0, 0, 77)) // more or less default
+                OverlayColorChangeEvent.publish(OverlayColorChangeEvent(Color(255, 0, 0, 77))) // more or less default
             }
         }
 
         registerListener(clazz.getDeclaredField("damageTintPresets")) { value: Int ->
-            OverlayTextureListener.notifyColorChanged(DamageTintPresets.entries[value].color)
+            OverlayColorChangeEvent.publish(OverlayColorChangeEvent(DamageTintPresets.entries[value].color))
             damageTintColor = DamageTintPresets.entries[value].color
         }
 
@@ -517,10 +519,11 @@ class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
 
         registerListener(clazz.getDeclaredField("customWindowTitle")) { value: String ->
             if (value.isNotEmpty()) {
-                WindowTitleListener.notifyWindowChanged(value)
+                WindowTitleChangedEvent.publish(WindowTitleChangedEvent(value))
             } else (
-                    WindowTitleListener.notifyWindowChanged("")
-                    )
+                    WindowTitleChangedEvent.publish(
+                        WindowTitleChangedEvent("")
+                    ))
         }
 
         registerListener(clazz.getDeclaredField("shouldUseFullbright")) { value: Boolean ->

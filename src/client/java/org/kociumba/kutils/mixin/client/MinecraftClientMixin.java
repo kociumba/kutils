@@ -1,11 +1,12 @@
 package org.kociumba.kutils.mixin.client;
 
+import kotlin.Unit;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.RunArgs;
 import org.kociumba.kutils.KutilsLogger;
-import org.kociumba.kutils.client.WindowTitleListener;
+import org.kociumba.kutils.client.events.WindowTitleChangedEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -19,7 +20,10 @@ public class MinecraftClientMixin {
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void init(RunArgs args, CallbackInfo ci) {
-        WindowTitleListener.Companion.register(newTitle -> lastTitle = newTitle);
+        WindowTitleChangedEvent.Companion.subscribe(event -> {
+            lastTitle = event.getNewTitle();
+            return Unit.INSTANCE;
+        });
         KutilsLogger.INSTANCE.info("window title listener initialized");
     }
 
