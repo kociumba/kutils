@@ -3,7 +3,6 @@ package org.kociumba.kutils.client
 //import net.hypixel.modapi.HypixelModAPI
 //import net.hypixel.modapi.packet.impl.clientbound.ClientboundHelloPacket
 //import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket
-import gg.essential.universal.UChat
 import gg.essential.universal.UScreen
 import gg.essential.universal.utils.MCMinecraft
 import imgui.*
@@ -15,17 +14,20 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.hud.ChatHud
 import net.minecraft.client.option.KeyBinding
 import net.minecraft.client.util.InputUtil
+import net.minecraft.scoreboard.ScoreboardDisplaySlot
 import net.minecraft.util.Util
 import org.kociumba.kutils.client.bazaar.WeightEdit
 import org.kociumba.kutils.client.bazaar.bazaarUI
 import org.kociumba.kutils.client.chat.ChatImageUI
 import org.kociumba.kutils.client.chat.registerChatMessageHandler
 import org.kociumba.kutils.client.events.GameJoinEvent
+import org.kociumba.kutils.client.events.GameLeaveEvent
 import org.kociumba.kutils.client.events.WindowTitleChangedEvent
 import org.kociumba.kutils.client.funny.SaabMode
 import org.kociumba.kutils.client.hud.hud
@@ -36,6 +38,9 @@ import org.kociumba.kutils.client.lua.ModuleManager
 import org.kociumba.kutils.client.mappings.MappingLoader
 import org.kociumba.kutils.client.notes.NoteData
 import org.kociumba.kutils.client.notes.NotesScreen
+import org.kociumba.kutils.client.tabList.objective
+import org.kociumba.kutils.client.tabList.scoreboard
+import org.kociumba.kutils.client.testingGUI.testingGUI
 import org.kociumba.kutils.client.utils.checkKutilsUpdates
 import org.kociumba.kutils.log
 import org.lwjgl.glfw.GLFW
@@ -74,6 +79,15 @@ class KutilsClient : ClientModInitializer {
 
     override fun onInitializeClient() {
         var start = Util.getMeasuringTimeMs()
+
+        val testing: KeyBinding = KeyBindingHelper.registerKeyBinding(
+            KeyBinding(
+                "",
+                InputUtil.Type.KEYSYM,
+                GLFW.GLFW_KEY_HOME,
+                "kutils"
+            )
+        )
 
         val open: KeyBinding = KeyBindingHelper.registerKeyBinding(
             KeyBinding(
@@ -127,6 +141,14 @@ class KutilsClient : ClientModInitializer {
                 log.info("kutils config opened")
             }
 
+            while (testing.wasPressed()) {
+                if (!testingGUI.open) {
+                    Imguimc.pushRenderable(testingGUI).also { testingGUI.open = true }
+                } else {
+                    Imguimc.pullRenderable(testingGUI).also { testingGUI.open = false }
+                }
+            }
+
             while (bazaar.wasPressed()) {
                 if (client.currentScreen !is bazaarUI) {
                     bazaarUI.reset()  // Reset some stuff to get around binding limitations
@@ -176,6 +198,11 @@ class KutilsClient : ClientModInitializer {
                 } catch (e: Exception) {
                     log.error("Failed to get chat hud", e)
                 }
+            }
+
+            if (client.player != null && client.world != null) {
+                scoreboard = client.world!!.scoreboard
+                objective = scoreboard?.getObjectiveForSlot(ScoreboardDisplaySlot.LIST)
             }
         }
 
@@ -320,6 +347,15 @@ class KutilsClient : ClientModInitializer {
 
 //        GameJoinEvent.subscribe { checkKutilsUpdates() } // subscribe to any for testing
         GameJoinEvent.subscribeOnce { checkKutilsUpdates() } // subscribe once for prod
+
+        ClientPlayConnectionEvents.DISCONNECT.register { handler, client ->
+            GameLeaveEvent.publish(
+                GameLeaveEvent(
+                    handler,
+                    client
+                )
+            )
+        }
 
         log.info("kutils initial setup done in ${Util.getMeasuringTimeMs() - start}ms")
     }

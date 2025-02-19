@@ -18,6 +18,7 @@
     "GameOptionsMixin",
     "MinecraftClientMixin",
     "OverlayTextureMixin",
+    "PlayerListHudAccessor",
     "SimpleOptionMixin"
   ],
   "injectors": {
