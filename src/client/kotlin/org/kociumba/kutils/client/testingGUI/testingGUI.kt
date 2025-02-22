@@ -3,6 +3,7 @@ package org.kociumba.kutils.client.testingGUI
 import imgui.ImGui
 import imgui.flag.ImGuiWindowFlags
 import imgui.type.ImString
+import org.kociumba.kutils.client.client
 import org.kociumba.kutils.client.imgui.ImGuiKutilsTheme
 import org.kociumba.kutils.client.imgui.ImImage
 import org.kociumba.kutils.client.imgui.LoadingState
@@ -10,6 +11,7 @@ import org.kociumba.kutils.client.imgui.spinner
 import org.kociumba.kutils.client.tabList.ScoreboardKey
 import org.kociumba.kutils.client.tabList.ScoreboardValue
 import org.kociumba.kutils.client.tabList.getTabListKeyPairs
+import org.kociumba.kutils.client.utils.isHypixel
 import org.kociumba.kutils.log
 import xyz.breadloaf.imguimc.interfaces.Renderable
 import xyz.breadloaf.imguimc.interfaces.Theme
@@ -88,6 +90,8 @@ object testingGUI : Renderable {
         if (ImGui.button("get tab list")) {
             info = getTabListKeyPairs()
             log.info(info)
+            log.info(isHypixel())
+            log.info(client.server?.name)
         }
         if (info != null) ImGui.text(info?.entries?.joinToString())
 
