@@ -36,12 +36,12 @@ public abstract class ExperienceOrbEntityRendererMixin extends EntityRenderer {
 
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void onRender(ExperienceOrbEntity experienceOrbEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, CallbackInfo ci) {
-        if (getC().getCustomXpOrbSize() == 0.0f && getC().getCustomXpOrbColor().getAlpha() == 0) {
-            ci.cancel(); // skip rendering 0 size and 0 alpha orbs to improve performance
-        }
-
         if (!getC().getShouldUsecustomXpOrbs()) {
             return;
+        }
+
+        if (getC().getCustomXpOrbSize() == 0.0f && getC().getCustomXpOrbColor().getAlpha() == 0) {
+            ci.cancel(); // skip rendering 0 size and 0 alpha orbs to improve performance
         }
 
         matrixStack.push();
