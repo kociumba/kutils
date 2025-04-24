@@ -82,7 +82,7 @@ dependencies {
     implementation(include("gg.essential:elementa:${project.property("elementa_version")}")!!)
     modImplementation(include("gg.essential:universalcraft-1.21-fabric:401")!!)
 
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
     // would be cool to be able to include it in jar couse of fucked up versioning
