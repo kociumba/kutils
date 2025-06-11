@@ -80,7 +80,7 @@ dependencies {
 
     implementation(include("gg.essential:vigilance:${project.property("vigilance_version")}")!!)
     implementation(include("gg.essential:elementa:${project.property("elementa_version")}")!!)
-    modImplementation(include("gg.essential:universalcraft-1.21-fabric:404+build-set-fmlmodtype-modlauncher")!!)
+    modImplementation(include("gg.essential:universalcraft-1.21-fabric:407+feature-1.21.6-fabric")!!)
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
