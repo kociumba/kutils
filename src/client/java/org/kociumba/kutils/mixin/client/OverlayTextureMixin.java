@@ -32,7 +32,7 @@ import static org.kociumba.kutils.client.KutilsClientKt.getC;
 public abstract class OverlayTextureMixin {
 
     @Shadow
-    private NativeImageBackedTexture texture = new NativeImageBackedTexture(16, 16, false);
+    private NativeImageBackedTexture texture = new NativeImageBackedTexture("Entity Color Overlay", 16, 16, false);
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void initCustomOverlay(CallbackInfo ci) {
@@ -65,10 +65,11 @@ public abstract class OverlayTextureMixin {
             }
         }
 
-        RenderSystem.activeTexture(33985);
-        this.texture.bindTexture();
-        nativeImage.upload(0, 0, 0, 0, 0, nativeImage.getWidth(), nativeImage.getHeight(), false, true, false, false);
-        RenderSystem.activeTexture(33984);
+        this.texture.setFilter(false, false);
+        this.texture.setClamp(true);
+        this.texture.upload();
+
+        RenderSystem.setupOverlayColor(this.texture.getGlTexture());
     }
 
     @Unique
@@ -76,6 +77,7 @@ public abstract class OverlayTextureMixin {
         alpha = 255 - alpha;
 //        int value = ((alpha & 0xFF) << 24) | ((red & 0xff) << 16) | ((green & 0xff) << 8) | ((blue & 0xff));
 //        UChat.chat("Color: " + Integer.toString(value));
-        return ColorHelper.Abgr.getAbgr(alpha, blue, green, red);
+//        return ColorHelper.toAbgr(ColorHelper.getArgb(alpha, blue, green, red));
+        return ColorHelper.toAbgr(ColorHelper.getArgb(alpha, red, green, blue));
     }
 }

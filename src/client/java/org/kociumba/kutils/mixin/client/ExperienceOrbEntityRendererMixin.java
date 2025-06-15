@@ -4,6 +4,7 @@ import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.EntityRenderer;
 import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.ExperienceOrbEntityRenderer;
+import net.minecraft.client.render.entity.state.ExperienceOrbEntityRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.ExperienceOrbEntity;
 import net.minecraft.util.Identifier;
@@ -34,8 +35,8 @@ public abstract class ExperienceOrbEntityRendererMixin extends EntityRenderer {
     @Unique
     private static final Identifier TEXTURE = getTexture();
 
-    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
-    private void onRender(ExperienceOrbEntity experienceOrbEntity, float f, float g, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, CallbackInfo ci) {
+    @Inject(method = "render(Lnet/minecraft/client/render/entity/state/ExperienceOrbEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At("HEAD"), cancellable = true)
+    private void onRender(ExperienceOrbEntityRenderState experienceOrbEntityRenderState, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i, CallbackInfo ci) {
         if (getC().getCustomXpOrbSize() == 0.0f && getC().getCustomXpOrbColor().getAlpha() == 0) {
             ci.cancel(); // skip rendering 0 size and 0 alpha orbs to improve performance
         }
@@ -49,11 +50,11 @@ public abstract class ExperienceOrbEntityRendererMixin extends EntityRenderer {
         float customSize = getC().getCustomXpOrbSize();
         matrixStack.scale(customSize, customSize, customSize);
 
-        int j = experienceOrbEntity.getOrbSize();
-        float uMin = (float) (j) / 64.0F;
-        float uMax = (float) (j + 16) / 64.0F;
-        float vMin = (float) (j) / 64.0F;
-        float vMax = (float) (j + 16) / 64.0F;
+        int j = experienceOrbEntityRenderState.size;
+        float uMin = (float) (j % 4 * 16) / 64.0F;
+        float uMax = (float) (j % 4 * 16 + 16) / 64.0F;
+        float vMin = (float) (j / 4 * 16) / 64.0F;
+        float vMax = (float) (j / 4 * 16 + 16) / 64.0F;
 
         Color customColor = getC().getCustomXpOrbColor();
         int red = customColor.getRed();
@@ -69,10 +70,10 @@ public abstract class ExperienceOrbEntityRendererMixin extends EntityRenderer {
         VertexConsumer vertexConsumer = vertexConsumerProvider.getBuffer(RenderLayer.getEntityTranslucent(TEXTURE));
         MatrixStack.Entry entry = matrixStack.peek();
 
-        renderVertex(vertexConsumer, entry, -0.5F, -0.25F, red, green, blue, alpha, uMin, vMax, light);
-        renderVertex(vertexConsumer, entry, 0.5F, -0.25F, red, green, blue, alpha, uMax, vMax, light);
-        renderVertex(vertexConsumer, entry, 0.5F, 0.75F, red, green, blue, alpha, uMax, vMin, light);
-        renderVertex(vertexConsumer, entry, -0.5F, 0.75F, red, green, blue, alpha, uMin, vMin, light);
+        renderVertex(vertexConsumer, entry, -0.5F, -0.25F, red, green, blue, alpha, uMin, vMax, i);
+        renderVertex(vertexConsumer, entry, 0.5F, -0.25F, red, green, blue, alpha, uMax, vMax, i);
+        renderVertex(vertexConsumer, entry, 0.5F, 0.75F, red, green, blue, alpha, uMax, vMin, i);
+        renderVertex(vertexConsumer, entry, -0.5F, 0.75F, red, green, blue, alpha, uMin, vMin, i);
 
         matrixStack.pop();
         ci.cancel();

@@ -2,9 +2,9 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "2.0.21"
+    kotlin("jvm") version "2.1.21"
 //    id("fabric-loom") version "1.7.1"
-    id("fabric-loom") version "1.8.9"
+    id("fabric-loom") version "1.10.1"
     id("maven-publish")
     kotlin("plugin.serialization") version "1.8.10"
 }
@@ -51,6 +51,9 @@ repositories {
     maven(url = "https://jitpack.io")
     maven(url = "https://repo.hypixel.net/repository/Hypixel/")
     maven(url = "https://maven.terraformersmc.com/")
+    maven("https://maven.isxander.dev/releases") {
+        name = "Xander Maven"
+    }
 
     maven {
         url = uri("https://maven.pkg.github.com/kociumba/imgui-mc")
@@ -78,9 +81,9 @@ dependencies {
 
     modImplementation("net.fabricmc.fabric-api:fabric-api:${project.property("fabric_version")}")
 
-    implementation(include("gg.essential:vigilance:${project.property("vigilance_version")}")!!)
+    modImplementation(include("gg.essential:vigilance:${project.property("vigilance_version")}")!!) // unmaintained, have to use something else
     implementation(include("gg.essential:elementa:${project.property("elementa_version")}")!!)
-    modImplementation(include("gg.essential:universalcraft-1.21-fabric:373")!!)
+    modImplementation(include("gg.essential:universalcraft-1.21.5-fabric:${project.property("universalcraft_version")}")!!)
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
@@ -91,7 +94,7 @@ dependencies {
 //    modImplementation(include("xyz.breadloaf.imguimc:imgui-mc:${project.property("imguimc_version")}")!!)
 
     // using my fork couse the other one is down
-    modImplementation(include("xyz.breadloaf.imguimc:imgui-mc:1.21.1-1.0.15")!!)
+    modImplementation(include("xyz.breadloaf.imguimc:imgui-mc:${project.property("imguimc_version")}")!!)
 //    modImplementation(include("net.hypixel:mod-api:1.0.1")!!)
 
     implementation("com.github.weisj:jsvg:1.6.0")

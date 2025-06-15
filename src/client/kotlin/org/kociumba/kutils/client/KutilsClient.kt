@@ -36,6 +36,7 @@ import org.kociumba.kutils.client.lua.ModuleManager
 import org.kociumba.kutils.client.mappings.MappingLoader
 import org.kociumba.kutils.client.notes.NoteData
 import org.kociumba.kutils.client.notes.NotesScreen
+import org.kociumba.kutils.client.utils.chatInfo
 import org.kociumba.kutils.client.utils.checkKutilsUpdates
 import org.kociumba.kutils.log
 import org.lwjgl.glfw.GLFW
@@ -45,14 +46,16 @@ import xyz.breadloaf.imguimc.imguiInternal.InitCallback
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import kotlin.io.path.Path
+import kotlin.io.path.exists
 
-var c: ConfigGUI = ConfigGUI()
+var c = Config.loadFrom()
 var displayingCalc = false
 var displayNotes = false
 var client: MinecraftClient = MinecraftClient.getInstance()
 var chatHud: ChatHud? = null
 var isOnHypixel = false
-var modID = "kutils"
+const val modID = "kutils"
 
 //var loacationPacket: ClientboundLocationPacket? = null
 //val LUA_GLOBAL: Globals = JsePlatform.standardGlobals()
@@ -69,6 +72,7 @@ var largeRoboto: ImFont? = null
 
 @Environment(EnvType.CLIENT)
 class KutilsClient : ClientModInitializer {
+    //    var c = KutilsConfig.createAndLoad()
     var loadedWindow = false
     var loadedOptions = false
 
@@ -123,8 +127,10 @@ class KutilsClient : ClientModInitializer {
         // Use once, minimize performance impact
         ClientTickEvents.END_CLIENT_TICK.register { client ->
             while (open.wasPressed()) {
-                UScreen.displayScreen(c.gui())
-                log.info("kutils config opened")
+                if (client.currentScreen !is KutilsConfig) {
+                    UScreen.displayScreen(KutilsConfig(c))
+                    log.info("kutils config opened")
+                }
             }
 
             while (bazaar.wasPressed()) {
@@ -137,7 +143,7 @@ class KutilsClient : ClientModInitializer {
             while (openCalc.wasPressed()) {
                 if (!displayingCalc) {
                     displayingCalc = true
-                    MinecraftClient.getInstance().gameRenderer.renderBlur(1f)
+                    MinecraftClient.getInstance().gameRenderer.renderBlur()
                     ImCalcUI.reset()
                     Imguimc.pushRenderable(ImCalcUI)
                 } else {
@@ -183,7 +189,7 @@ class KutilsClient : ClientModInitializer {
             dispatcher.register(ClientCommandManager.literal("kutils").executes { context ->
                 var client = MinecraftClient.getInstance()
                 client.send {
-                    client.setScreenAndRender(c.gui())
+                    UScreen.displayScreen(KutilsConfig(c))
                     log.info("kutils config opened by command")
                 }
                 0 // need this to return something
@@ -320,7 +326,18 @@ class KutilsClient : ClientModInitializer {
 
 //        GameJoinEvent.subscribe { checkKutilsUpdates() } // subscribe to any for testing
         GameJoinEvent.subscribeOnce { checkKutilsUpdates() } // subscribe once for prod
+        GameJoinEvent.subscribeOnce { newConfigAlert() }
 
         log.info("kutils initial setup done in ${Util.getMeasuringTimeMs() - start}ms")
+    }
+}
+
+fun newConfigAlert() {
+    if (Path("./config/kutils.toml").exists()) {
+        chatInfo(
+            "Kutils now uses a new config format.\n" +
+                    "Please redo your settings.\n" +
+                    "Your old config is at config/kutils.toml."
+        )
     }
 }

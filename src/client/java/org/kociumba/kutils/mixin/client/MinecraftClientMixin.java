@@ -8,6 +8,7 @@ import net.minecraft.client.RunArgs;
 import org.kociumba.kutils.KutilsLogger;
 import org.kociumba.kutils.client.events.WindowTitleChangedEvent;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -16,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Environment(EnvType.CLIENT)
 @Mixin(MinecraftClient.class)
 public class MinecraftClientMixin {
+    @Unique
     private String lastTitle = "";
 
     @Inject(method = "<init>", at = @At("TAIL"))

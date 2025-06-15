@@ -1,586 +1,503 @@
 package org.kociumba.kutils.client
 
-import gg.essential.universal.utils.MCMinecraft
-import gg.essential.vigilance.Vigilant
-import gg.essential.vigilance.data.Property
-import gg.essential.vigilance.data.PropertyType
 import imgui.ImGui
+import imgui.flag.ImGuiInputTextFlags
+import imgui.flag.ImGuiStyleVar
+import imgui.flag.ImGuiTreeNodeFlags
+import imgui.flag.ImGuiWindowFlags
+import imgui.type.ImBoolean
+import imgui.type.ImInt
+import imgui.type.ImString
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
-import net.minecraft.client.MinecraftClient
-import org.kociumba.kutils.client.bazaar.WeightEdit
+import net.minecraft.text.Text
 import org.kociumba.kutils.client.chat.ChatImageUI
 import org.kociumba.kutils.client.events.OverlayColorChangeEvent
 import org.kociumba.kutils.client.events.WindowTitleChangedEvent
-import org.kociumba.kutils.client.hud.hud
 import org.kociumba.kutils.client.hud.networkingHud
 import org.kociumba.kutils.client.hud.performanceHud
+import org.kociumba.kutils.client.imgui.ImGuiKutilsTheme
 import xyz.breadloaf.imguimc.Imguimc
+import xyz.breadloaf.imguimc.interfaces.Renderable
+import xyz.breadloaf.imguimc.screen.ImGuiScreen
+import xyz.breadloaf.imguimc.screen.ImGuiWindow
 import java.awt.Color
-import java.io.File
-
-/**
- * The best color presets I could think of
- *
- * They are in fact so good I'm not going to enable them in the public build 💀
- */
-enum class DamageTintPresets(val color: Color) {
-    PissYellow(Color(255, 242, 78)),
-    ShitBrown(Color(82, 50, 15)),
-    TittyMilk(Color(242, 223, 228)),
-    PussyPink(Color(227, 153, 143)),
-    WeedGreen(Color(1, 94, 7)),
-    MethBlue(Color(140, 200, 222)),
-}
 
 @Environment(EnvType.CLIENT)
-class ConfigGUI : Vigilant(File("./config/kutils.toml")) {
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "custom damage tint",
-        description = "toggle custom damage tint coloring",
-        category = "rendering",
-        subcategory = "entity",
-    )
-    var shouldTintDamage: Boolean = true
+class KutilsConfig(
+    private val config: Config
+) : ImGuiScreen(Text.literal("KUtils Settings"), true) {
 
-    @Property(
-        type = PropertyType.COLOR,
-        name = "custom damage tint color",
-        description = "change the color of the damage tint",
-        category = "rendering",
-        subcategory = "entity",
-        allowAlpha = true
-    )
-    var damageTintColor: Color = Color(255, 0, 0, 77)
+    // State variables for all settings
+    private val shouldTintDamageFlag = ImBoolean(config.shouldTintDamage)
+    private val shouldColorWaterFlag = ImBoolean(config.shouldColorWater)
+    private val shouldChangeTimeFlag = ImBoolean(config.shouldChangeTime)
+    private val shouldAlwaysSprintFlag = ImBoolean(config.shouldAlwaysSprint)
+    private val displayHudFlag = ImBoolean(config.displayHud)
+    private val displayPerformanceHudFlag = ImBoolean(config.displayPerformanceHud)
+    private val displayNetworkingHudFlag = ImBoolean(config.displayNetworkingHud)
+    private val disableBlockBreakParticleFlag = ImBoolean(config.disableBlockBreakParticle)
+    private val shouldUseFullbrightFlag = ImBoolean(config.shouldUseFullbright)
+    private val showWeeklyTrafficFlag = ImBoolean(config.showWeeklyTraffic)
+    private val showWeeklyAveragePriceFlag = ImBoolean(config.showWeeklyAveragePrice)
+    private val hudHasBackgroundFlag = ImBoolean(config.hudHasBackground)
+    private val hudIsDraggableFlag = ImBoolean(config.hudIsDraggable)
+    private val removeSelfieCamera = ImBoolean(config.removeSelfieCamera)
+    private val shouldPreviewChatImagesFlag = ImBoolean(config.shouldPreviewChatImages)
+    private val saabModeFlag = ImBoolean(config.saabMode)
+    private val shouldSubmitSignsWithEnterFlag = ImBoolean(config.shouldSubmitSignsWithEnter)
+    private val shouldUsecustomXpOrbsFlag = ImBoolean(config.shouldUsecustomXpOrbs)
 
-    @Property(
-        type = PropertyType.SELECTOR,
-        name = "damage tint presets",
-        description = "change the color of the damage tint",
-        category = "rendering",
-        subcategory = "entity",
-        options = ["PissYellow", "ShitBrown", "TittyMilk", "PussyPink", "WeedGreen", "MethBlue"],
-        hidden = true
-    )
-    var damageTintPresets: Int = DamageTintPresets.PissYellow.ordinal
+    // Slider values
+    private val userTimeSlider = floatArrayOf(config.userTime)
+    private val fontScaleSlider = floatArrayOf(config.fontScale)
+    private val shouldConsiderInflatedPercentSlider = floatArrayOf(config.shouldConsiderInflatedPercent)
+    private val mainThemeBackgroundOpacitySlider = floatArrayOf(config.mainThemeBackgroundOpacity)
+    private val windowRoundingSlider = floatArrayOf(config.windowRounding)
+    private val wholeWindowAlphaSlider = floatArrayOf(config.wholeWindowAlpha)
+    private val customXpOrbSizeSlider = floatArrayOf(config.customXpOrbSize)
 
-    /*
-     * Gonna have to re add this later as an easter egg
-     */
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "custom water tint",
-        description = "toggle custom water coloring",
-        category = "rendering",
-        subcategory = "world",
-        hidden = true
-    )
-    var shouldColorWater: Boolean = false
+    // Text inputs
+    private val customWindowTitleStr = ImString(config.customWindowTitle, 256)
 
-    @Property(
-        type = PropertyType.COLOR,
-        name = "custom water tint color",
-        description = "change the color of the water",
-        category = "rendering",
-        subcategory = "world",
-        allowAlpha = true,
-        hidden = true
-    )
-    var waterColor: Color = Color(0, 0, 255, 77)
+    // Damage tint presets
+    private val damageTintPresetsCombo = ImInt(config.damageTintPresets)
+    private val presetNames = arrayOf("PissYellow", "ShitBrown", "TittyMilk", "PussyPink", "WeedGreen", "MethBlue")
 
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "change time",
-        description = "toggle time change",
-        category = "rendering",
-        subcategory = "world",
-    )
-    var shouldChangeTime: Boolean = false
+    override fun initImGui(): List<ImGuiWindow?>? {
+        // Fullscreen overlay style flags
+        val flags = ImGuiWindowFlags.NoDecoration or
+                ImGuiWindowFlags.NoMove or
+                ImGuiWindowFlags.NoResize or
+                ImGuiWindowFlags.NoSavedSettings or
+                ImGuiWindowFlags.NoFocusOnAppearing or
+                ImGuiWindowFlags.NoBringToFrontOnFocus or
+                ImGuiWindowFlags.NoBackground
 
-    @Property(
-        type = PropertyType.DECIMAL_SLIDER,
-        name = "user time",
-        description = "world time the changer should use",
-        category = "rendering",
-        subcategory = "world",
-        minF = 0.0f,
-        maxF = 24000.0f
-    )
-    var userTime: Float = 0.0f
+        return listOf(
+            ImGuiWindow(
+                ImGuiKutilsTheme(),
+                Text.literal("KUtils Settings"),
+                { renderFullscreenOverlay() },
+                false,
+                flags
+            )
+        )
+    }
 
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "always sprint",
-        description = "toggle always sprint",
-        category = "player",
-        subcategory = "movement"
-    )
-    var shouldAlwaysSprint: Boolean = false
+    private fun renderFullscreenOverlay() {
+        val viewport = ImGui.getMainViewport()
+        ImGui.setNextWindowPos(viewport.posX, viewport.posY)
+        ImGui.setNextWindowSize(viewport.sizeX, viewport.sizeY)
 
-    @Property(
-        type = PropertyType.TEXT,
-        name = "custom window title text",
-        description = "⚠ window title updates when you close the settings menu",
-        category = "misc",
-        subcategory = "window",
-    )
-    var customWindowTitle: String = ""
+        if (ImGui.begin(
+                "KUtils Settings Overlay",
+                ImGuiWindowFlags.NoDecoration or
+                        ImGuiWindowFlags.NoMove or
+                        ImGuiWindowFlags.NoNavFocus or
+                        ImGuiWindowFlags.NoNavInputs
+            )
+        ) {
+            // Center the content
+            val contentWidth = 800f
+            val availWidth = ImGui.getContentRegionAvailX()
+            val offsetX = (availWidth - contentWidth) * 0.5f
+            if (offsetX > 0) ImGui.setCursorPosX(ImGui.getCursorPosX() + offsetX)
 
-    /*
-     * not worth keeping for now, couse I don't wanna parse hypixel data to get skyblock stats
-     */
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "hud",
-        description = "health/armor/damage hud (WIP)",
-        category = "rendering",
-        subcategory = "utils",
-        hidden = true
-    )
-    var displayHud: Boolean = false
+            ImGui.beginChild("SettingsContent", contentWidth, 0f, true)
 
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "performance hud",
-        description = "display a hud with cpu and memory usage",
-        category = "rendering",
-        subcategory = "utils",
-    )
-    var displayPerformanceHud: Boolean = false
+            // Title
+            ImGui.pushStyleVar(ImGuiStyleVar.FramePadding, 0f, 10f)
+            ImGui.text("KUtils Configuration")
+            ImGui.separator()
+            ImGui.popStyleVar()
 
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "networking hud",
-        description = "display a hud with info about the current server and client networking, like TPS",
-        category = "rendering",
-        subcategory = "utils",
-    )
-    var displayNetworkingHud: Boolean = false
+            renderAllSettings()
 
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "disable block breaking particles",
-        description = "prevents block breaking particles from being rendered",
-        category = "rendering",
-        subcategory = "particles",
-    )
-    var disableBlockBreakParticle: Boolean = false
+//            ImGui.separator()
+//            if (ImGui.button("Save", 200f, 40f)) {
+//                config.writeData()
+//            }
 
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "toggle fullbright",
-        description = "this is just high gamma, does not remove lighting 🤷",
-        category = "rendering",
-        subcategory = "utils",
-    )
-    var shouldUseFullbright: Boolean = false
+            ImGui.endChild()
+        }
+        ImGui.end()
+    }
 
-    @Property(
-        type = PropertyType.DECIMAL_SLIDER,
-        name = "font scale",
-        description = "change the font size used in all of the hud elements",
-        category = "gui",
-        subcategory = "kutils ui",
-        maxF = 2.0f,
-        minF = 0.1f,
-    )
-    var fontScale: Float = 1.0f
+    private fun renderAllSettings() {
+        val treeFlags = ImGuiTreeNodeFlags.DefaultOpen or ImGuiTreeNodeFlags.Framed
 
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "show weekly traffic",
-        description = "show weekly bazaar traffic in the bazaar ui",
-        category = "gui",
-        subcategory = "kutils ui",
-    )
-    var showWeeklyTraffic: Boolean = false
+        // ── RENDERING ──────────────────────────────────────────────────────────────
+        if (ImGui.collapsingHeader("Rendering", treeFlags)) {
+            renderEntitySettings()
+            renderWorldSettings()
+            renderParticleSettings()
+            renderUtilsSettings()
+        }
 
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "show weekly average price",
-        description = "show weekly average price in the bazaar ui",
-        category = "gui",
-        subcategory = "kutils ui",
-    )
-    var showWeeklyAveragePrice: Boolean = true
+        // ── PLAYER ─────────────────────────────────────────────────────────────────
+        if (ImGui.collapsingHeader("Player", treeFlags)) {
+            renderMovementSettings()
+            renderCameraSettings()
+        }
 
-    @Property(
-        type = PropertyType.PERCENT_SLIDER,
-        name = "inflated percent",
-        description = "change at which point the bazaar items should be considered inflated" +
-                " the percent is how many percent higher is the current sell/buy price than the average from last 7 days",
-        category = "gui",
-        subcategory = "kutils ui",
-    )
-    var shouldConsiderInflatedPercent: Float = 0.2f
+        // ── GUI / KUTILS UI ────────────────────────────────────────────────────────
+        if (ImGui.collapsingHeader("GUI", treeFlags)) {
+            renderKutilsUISettings()
+            renderThemeSettings()
+            renderSignSettings()
+        }
 
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "hud has background",
-        description = "toggle the background of the hud",
-        category = "gui",
-        subcategory = "kutils ui",
-    )
-    var hudHasBackground: Boolean = true
+        // ── CHAT ──────────────────────────────────────────────────────────────────
+        if (ImGui.collapsingHeader("Chat", treeFlags)) {
+            renderChatSettings()
+        }
 
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "hud is draggable",
-        description = "toggle the draggability of the hud",
-        category = "gui",
-        subcategory = "kutils ui",
-    )
-    var hudIsDraggable: Boolean = true
-
-    /**
-     * hidden couse of the theme section
-     */
-    @Property(
-        type = PropertyType.PERCENT_SLIDER,
-        name = "main theme background opacity",
-        description = "change the opacity of the main theme background",
-        category = "gui",
-        subcategory = "theme",
-        hidden = true
-    )
-    var mainThemeBackgroundOpacity: Float = 1.0f
-
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "remove selfie camera",
-        description = "removes the selfie camera when using F5",
-        category = "player",
-        subcategory = "camera",
-    )
-    var removeSelfieCamera: Boolean = true
-
-    /**
-     * Theme customisation
-     *
-     * user colors and values
-     */
-
-    /**
-     * options related to the imgui theme
-     */
-    @Property(
-        type = PropertyType.COLOR,
-        name = "window background",
-        description = "change the background color of the main bazaar window",
-        category = "gui",
-        subcategory = "theme",
-        allowAlpha = true
-    )
-    var mainWindowBackground: Color = Color(0.05f, 0.05f, 0.05f, 1.0f)
-
-    @Property(
-        type = PropertyType.DECIMAL_SLIDER,
-        name = "window rounding",
-        description = "change the rounding of the window corners",
-        category = "gui",
-        subcategory = "theme",
-        maxF = 25.0f,
-        minF = 0.0f
-    )
-    var windowRounding: Float = 5.0f
-
-    @Property(
-        type = PropertyType.PERCENT_SLIDER,
-        name = "general opacity",
-        description = "change the opacity of the window and everything in it",
-        category = "gui",
-        subcategory = "theme",
-    )
-    var wholeWindowAlpha: Float = 1.0f
-//    var childBackground = Color(0.07f, 0.07f, 0.09f, 1.00f)
-
-    /**
-     * options related to the bazaar display itself
-     */
-    @Property(
-        type = PropertyType.COLOR,
-        name = "product ID color",
-        description = "color of the product ID",
-        category = "gui",
-        subcategory = "theme",
-        allowAlpha = false
-    )
-    var productIDColor: Color = Color.decode("#cba6f7")
-
-    @Property(
-        type = PropertyType.COLOR,
-        name = "sell price color",
-        description = "color of the sell price",
-        category = "gui",
-        subcategory = "theme",
-        allowAlpha = false
-    )
-    var sellPriceColor: Color = Color.decode("#94e2d5")
-
-    @Property(
-        type = PropertyType.COLOR,
-        name = "buy price color",
-        description = "color of the buy price",
-        category = "gui",
-        subcategory = "theme",
-        allowAlpha = false
-    )
-    var buyPriceColor: Color = Color.decode("#eba0ac")
-
-    @Property(
-        type = PropertyType.COLOR,
-        name = "difference color",
-        description = "color of the difference",
-        category = "gui",
-        subcategory = "theme",
-        allowAlpha = false
-    )
-    var differenceColor: Color = Color.decode("#89b4fa")
-
-    @Property(
-        type = PropertyType.COLOR,
-        name = "weekly traffic color",
-        description = "color of the weekly traffic",
-        category = "gui",
-        subcategory = "theme",
-        allowAlpha = false
-    )
-    var weeklyTrafficColor: Color = Color.decode("#fab387")
-
-    @Property(
-        type = PropertyType.COLOR,
-        name = "averages color",
-        description = "color of the averages",
-        category = "gui",
-        subcategory = "theme",
-        allowAlpha = false
-    )
-    var averagesColor: Color = Color.decode("#f9e2af")
-
-    @Property(
-        type = PropertyType.COLOR,
-        name = "positive prediction color",
-        description = "color of the positive prediction",
-        category = "gui",
-        subcategory = "theme",
-        allowAlpha = false
-    )
-    var positivePredictionColor: Color = Color.decode("#a6e3a1")
-
-    @Property(
-        type = PropertyType.COLOR,
-        name = "negative prediction color",
-        description = "color of the negative prediction",
-        category = "gui",
-        subcategory = "theme",
-        allowAlpha = false
-    )
-    var negativePredictionColor: Color = Color.decode("#f38ba8")
-
-    @Property(
-        type = PropertyType.COLOR,
-        name = "inflated item warning color",
-        description = "color of the inflated item warning",
-        category = "gui",
-        subcategory = "theme",
-        allowAlpha = false
-    )
-    var inflatedItemWarningColor: Color = Color.decode("#ff0000")
-
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "preview images in chat",
-        description = "toggle if kutils should show a preview of images in chat, when hovering over them",
-        category = "chat",
-        subcategory = "addons",
-    )
-    var shouldPreviewChatImages: Boolean = true
-
-    @Property(
-        type = PropertyType.BUTTON,
-        name = "edit prediction weights",
-        description = "edit the weights of the prediction model",
-        category = "gui",
-        subcategory = "internal",
-        placeholder = "open editor",
-    )
-    fun editWeights() {
-        if (!WeightEdit.rendered) {
-            WeightEdit.loadWeights()
-            WeightEdit.rendered = true
-            Imguimc.pushRenderable(WeightEdit)
-        } else {
-            Imguimc.pullRenderable(WeightEdit)
-            WeightEdit.rendered = false
-            WeightEdit.saveWeights()
+        // ── MISC ───────────────────────────────────────────────────────────────────
+        if (ImGui.collapsingHeader("Miscellaneous", treeFlags)) {
+            renderMiscSettings()
+            renderInternalSettings()
         }
     }
 
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "saab mode",
-        description = "???",
-        category = "gui",
-        subcategory = "???"
-    )
-    var saabMode: Boolean = false
-
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "submit signs with enter",
-        description = "you can still use shift+enter to write new lines",
-        category = "gui",
-        subcategory = "signs"
-    )
-    var shouldSubmitSignsWithEnter: Boolean = true
-
-    @Property(
-        type = PropertyType.SWITCH,
-        name = "use custom xp orbs",
-        description = "use custom xp orb renderer that makes them emissive and allows for custom colors",
-        category = "rendering",
-        subcategory = "entity",
-    )
-    var shouldUsecustomXpOrbs = true
-
-    @Property(
-        type = PropertyType.COLOR,
-        name = "custom xp orb color",
-        description = "the color to use when the custom xp orb renderin is being used",
-        category = "rendering",
-        subcategory = "entity",
-    )
-    var customXpOrbColor: Color = Color(9, 137, 9, 255)
-
-    @Property(
-        type = PropertyType.DECIMAL_SLIDER,
-        name = "custom xp orb size",
-        description = "the size of the custom xp orbs",
-        category = "rendering",
-        subcategory = "entity",
-        minF = 0.0f,
-        maxF = 2.0f,
-    )
-    var customXpOrbSize: Float = 1.0f
-
-    init {
-        initialize()
-
-        val clazz = javaClass
-        registerListener(clazz.getDeclaredField("damageTintColor")) { color: Color ->
-            OverlayColorChangeEvent.publish(OverlayColorChangeEvent(color))
-        }
-
-        registerListener(clazz.getDeclaredField("shouldTintDamage")) { value: Boolean ->
-            if (value) {
-                OverlayColorChangeEvent.publish(OverlayColorChangeEvent(this.damageTintColor))
-            } else {
-                OverlayColorChangeEvent.publish(OverlayColorChangeEvent(Color(255, 0, 0, 77))) // more or less default
+    private fun renderEntitySettings() {
+        if (ImGui.treeNodeEx("Entity", ImGuiTreeNodeFlags.DefaultOpen)) {
+            // Custom damage tint
+            if (ImGui.checkbox("Custom damage tint", shouldTintDamageFlag)) {
+                config.shouldTintDamage = shouldTintDamageFlag.get()
+                val color = if (shouldTintDamageFlag.get()) config.damageTintColor else Color(255, 0, 0, 77)
+                OverlayColorChangeEvent.publish(OverlayColorChangeEvent(color))
             }
-        }
 
-        registerListener(clazz.getDeclaredField("damageTintPresets")) { value: Int ->
-            OverlayColorChangeEvent.publish(OverlayColorChangeEvent(DamageTintPresets.entries[value].color))
-            damageTintColor = DamageTintPresets.entries[value].color
-        }
-
-        registerListener(clazz.getDeclaredField("displayHud")) { value: Boolean ->
-            if (value) {
-                Imguimc.pushRenderable(hud)
-            } else {
-                Imguimc.pullRenderable(hud)
+            // Damage tint color
+            val damageColor = floatArrayOf(
+                config.damageTintColor.red / 255f,
+                config.damageTintColor.green / 255f,
+                config.damageTintColor.blue / 255f,
+                config.damageTintColor.alpha / 255f
+            )
+            if (ImGui.colorEdit4("Damage tint color", damageColor) && shouldTintDamageFlag.get()) {
+                config.damageTintColor = Color(damageColor[0], damageColor[1], damageColor[2], damageColor[3])
+                OverlayColorChangeEvent.publish(OverlayColorChangeEvent(config.damageTintColor))
             }
-        }
 
-        registerListener(clazz.getDeclaredField("displayPerformanceHud")) { value: Boolean ->
-            if (value) {
-                Imguimc.pushRenderable(performanceHud)
-            } else {
-                Imguimc.pullRenderable(performanceHud)
+            // Damage tint presets (commented out in original but kept for completeness)
+            // if (ImGui.combo("Damage tint presets", damageTintPresetsCombo, presetNames)) {
+            //     config.damageTintPresets = damageTintPresetsCombo.get()
+            //     val presetColor = DamageTintPresets.entries[damageTintPresetsCombo.get()].color
+            //     OverlayColorChangeEvent.publish(OverlayColorChangeEvent(presetColor))
+            //     config.damageTintColor = presetColor
+            // }
+
+            // Custom XP orbs
+            if (ImGui.checkbox("Use custom XP orbs", shouldUsecustomXpOrbsFlag)) {
+                config.shouldUsecustomXpOrbs = shouldUsecustomXpOrbsFlag.get()
             }
-        }
 
-        registerListener(clazz.getDeclaredField("displayNetworkingHud")) { value: Boolean ->
-            if (value) {
-                Imguimc.pushRenderable(networkingHud)
-            } else {
-                Imguimc.pullRenderable(networkingHud)
+            if (shouldUsecustomXpOrbsFlag.get()) {
+                // XP orb color
+                val xpOrbColor = floatArrayOf(
+                    config.customXpOrbColor.red / 255f,
+                    config.customXpOrbColor.green / 255f,
+                    config.customXpOrbColor.blue / 255f,
+                    config.customXpOrbColor.alpha / 255f
+                )
+                if (ImGui.colorEdit4("Custom XP orb color", xpOrbColor)) {
+                    config.customXpOrbColor = Color(xpOrbColor[0], xpOrbColor[1], xpOrbColor[2], xpOrbColor[3])
+                }
+
+                // XP orb size
+                if (ImGui.sliderFloat("Custom XP orb size", customXpOrbSizeSlider, 0f, 2f)) {
+                    config.customXpOrbSize = customXpOrbSizeSlider[0]
+                }
             }
-        }
 
-        registerListener(clazz.getDeclaredField("displayHud")) { value: Boolean ->
-            if (value) {
-                Imguimc.pushRenderable(hud)
-            } else {
-                Imguimc.pullRenderable(hud)
+            ImGui.treePop()
+        }
+    }
+
+    private fun renderWorldSettings() {
+        if (ImGui.treeNodeEx("World", ImGuiTreeNodeFlags.DefaultOpen)) {
+            // Custom water tint (hidden in original)
+            // if (ImGui.checkbox("Custom water tint", shouldColorWaterFlag)) {
+            //     config.shouldColorWater = shouldColorWaterFlag.get()
+            // }
+
+            // Change time
+            if (ImGui.checkbox("Change time", shouldChangeTimeFlag)) {
+                config.shouldChangeTime = shouldChangeTimeFlag.get()
             }
-        }
 
-        registerListener(clazz.getDeclaredField("customWindowTitle")) { value: String ->
-            if (value.isNotEmpty()) {
-                WindowTitleChangedEvent.publish(WindowTitleChangedEvent(value))
-            } else (
-                    WindowTitleChangedEvent.publish(
-                        WindowTitleChangedEvent("")
-                    ))
-        }
-
-        registerListener(clazz.getDeclaredField("shouldUseFullbright")) { value: Boolean ->
-            if (value && MinecraftClient.getInstance().options != null) {
-                MCMinecraft.getInstance().options.gamma.value = 100.0
-            } else {
-                MCMinecraft.getInstance().options.gamma.value = 1.0
+            if (shouldChangeTimeFlag.get()) {
+                if (ImGui.sliderFloat("User time", userTimeSlider, 0f, 24000f)) {
+                    config.userTime = userTimeSlider[0]
+                }
             }
-        }
 
-        registerListener(clazz.getDeclaredField("fontScale")) { value: Float ->
-            ImGui.getIO().fontGlobalScale = value
+            ImGui.treePop()
         }
+    }
 
-        registerListener(clazz.getDeclaredField("shouldPreviewChatImages")) { value: Boolean ->
-            if (value) {
-                ChatImageUI.initialize()
-                Imguimc.pushRenderable(ChatImageUI)
-            } else {
-                Imguimc.pullRenderable(ChatImageUI)
+    private fun renderParticleSettings() {
+        if (ImGui.treeNodeEx("Particles", ImGuiTreeNodeFlags.DefaultOpen)) {
+            if (ImGui.checkbox("Disable block breaking particles", disableBlockBreakParticleFlag)) {
+                config.disableBlockBreakParticle = disableBlockBreakParticleFlag.get()
             }
+            ImGui.treePop()
         }
+    }
 
-        registerListener(clazz.getDeclaredField("saabMode")) { value: Boolean ->
-            if (value) {
-                Imguimc.pushRenderable(saab)
-            } else {
-                Imguimc.pullRenderable(saab)
+    private fun renderUtilsSettings() {
+        if (ImGui.treeNodeEx("Utils", ImGuiTreeNodeFlags.DefaultOpen)) {
+            // Hidden HUD (commented out in new version)
+            // if (ImGui.checkbox("Display HUD", displayHudFlag)) {
+            //     config.displayHud = displayHudFlag.get()
+            //     toggleRenderable(hud, displayHudFlag.get())
+            // }
+
+            if (ImGui.checkbox("Performance HUD", displayPerformanceHudFlag)) {
+                config.displayPerformanceHud = displayPerformanceHudFlag.get()
+                toggleRenderable(performanceHud, displayPerformanceHudFlag.get())
             }
+
+            if (ImGui.checkbox("Networking HUD", displayNetworkingHudFlag)) {
+                config.displayNetworkingHud = displayNetworkingHudFlag.get()
+                toggleRenderable(networkingHud, displayNetworkingHudFlag.get())
+            }
+
+            if (ImGui.checkbox("Toggle fullbright", shouldUseFullbrightFlag)) {
+                config.shouldUseFullbright = shouldUseFullbrightFlag.get()
+                client?.options?.gamma?.value = if (shouldUseFullbrightFlag.get()) 100.0 else 1.0
+            }
+
+            ImGui.treePop()
+        }
+    }
+
+    private fun renderMovementSettings() {
+        if (ImGui.treeNodeEx("Movement", ImGuiTreeNodeFlags.DefaultOpen)) {
+            if (ImGui.checkbox("Always sprint", shouldAlwaysSprintFlag)) {
+                config.shouldAlwaysSprint = shouldAlwaysSprintFlag.get()
+            }
+            ImGui.treePop()
+        }
+    }
+
+    private fun renderCameraSettings() {
+        if (ImGui.treeNodeEx("Camera", ImGuiTreeNodeFlags.DefaultOpen)) {
+            if (ImGui.checkbox("Remove selfie camera", removeSelfieCamera)) {
+                config.removeSelfieCamera = removeSelfieCamera.get()
+            }
+            ImGui.treePop()
+        }
+    }
+
+    private fun renderKutilsUISettings() {
+        if (ImGui.treeNodeEx("Kutils UI", ImGuiTreeNodeFlags.DefaultOpen)) {
+            if (ImGui.sliderFloat("Font scale", fontScaleSlider, 0.1f, 2f)) {
+                config.fontScale = fontScaleSlider[0]
+                ImGui.getIO().fontGlobalScale = config.fontScale
+            }
+
+            if (ImGui.checkbox("Show weekly traffic", showWeeklyTrafficFlag)) {
+                config.showWeeklyTraffic = showWeeklyTrafficFlag.get()
+            }
+
+            if (ImGui.checkbox("Show weekly average price", showWeeklyAveragePriceFlag)) {
+                config.showWeeklyAveragePrice = showWeeklyAveragePriceFlag.get()
+            }
+
+            if (ImGui.sliderFloat("Inflated percent", shouldConsiderInflatedPercentSlider, 0f, 1f)) {
+                config.shouldConsiderInflatedPercent = shouldConsiderInflatedPercentSlider[0]
+            }
+
+            if (ImGui.checkbox("HUD has background", hudHasBackgroundFlag)) {
+                config.hudHasBackground = hudHasBackgroundFlag.get()
+            }
+
+            if (ImGui.checkbox("HUD is draggable", hudIsDraggableFlag)) {
+                config.hudIsDraggable = hudIsDraggableFlag.get()
+            }
+
+            ImGui.treePop()
+        }
+    }
+
+    private fun renderThemeSettings() {
+        if (ImGui.treeNodeEx("Theme", ImGuiTreeNodeFlags.DefaultOpen)) {
+            // Window background
+            val windowBg = floatArrayOf(
+                config.mainWindowBackground.red / 255f,
+                config.mainWindowBackground.green / 255f,
+                config.mainWindowBackground.blue / 255f,
+                config.mainWindowBackground.alpha / 255f
+            )
+            if (ImGui.colorEdit4("Window background", windowBg)) {
+                config.mainWindowBackground = Color(windowBg[0], windowBg[1], windowBg[2], windowBg[3])
+            }
+
+            if (ImGui.sliderFloat("Window rounding", windowRoundingSlider, 0f, 25f)) {
+                config.windowRounding = windowRoundingSlider[0]
+            }
+
+            if (ImGui.sliderFloat("General opacity", wholeWindowAlphaSlider, 0f, 1f)) {
+                config.wholeWindowAlpha = wholeWindowAlphaSlider[0]
+            }
+
+            // Color settings for bazaar display
+            ImGui.separator()
+            ImGui.text("Bazaar Colors:")
+
+            val productIDColor = floatArrayOf(
+                config.productIDColor.red / 255f,
+                config.productIDColor.green / 255f,
+                config.productIDColor.blue / 255f
+            )
+            if (ImGui.colorEdit3("Product ID color", productIDColor)) {
+                config.productIDColor = Color(productIDColor[0], productIDColor[1], productIDColor[2])
+            }
+
+            val sellPriceColor = floatArrayOf(
+                config.sellPriceColor.red / 255f,
+                config.sellPriceColor.green / 255f,
+                config.sellPriceColor.blue / 255f
+            )
+            if (ImGui.colorEdit3("Sell price color", sellPriceColor)) {
+                config.sellPriceColor = Color(sellPriceColor[0], sellPriceColor[1], sellPriceColor[2])
+            }
+
+            val buyPriceColor = floatArrayOf(
+                config.buyPriceColor.red / 255f,
+                config.buyPriceColor.green / 255f,
+                config.buyPriceColor.blue / 255f
+            )
+            if (ImGui.colorEdit3("Buy price color", buyPriceColor)) {
+                config.buyPriceColor = Color(buyPriceColor[0], buyPriceColor[1], buyPriceColor[2])
+            }
+
+            val differenceColor = floatArrayOf(
+                config.differenceColor.red / 255f,
+                config.differenceColor.green / 255f,
+                config.differenceColor.blue / 255f
+            )
+            if (ImGui.colorEdit3("Difference color", differenceColor)) {
+                config.differenceColor = Color(differenceColor[0], differenceColor[1], differenceColor[2])
+            }
+
+            val weeklyTrafficColor = floatArrayOf(
+                config.weeklyTrafficColor.red / 255f,
+                config.weeklyTrafficColor.green / 255f,
+                config.weeklyTrafficColor.blue / 255f
+            )
+            if (ImGui.colorEdit3("Weekly traffic color", weeklyTrafficColor)) {
+                config.weeklyTrafficColor = Color(weeklyTrafficColor[0], weeklyTrafficColor[1], weeklyTrafficColor[2])
+            }
+
+            val averagesColor = floatArrayOf(
+                config.averagesColor.red / 255f,
+                config.averagesColor.green / 255f,
+                config.averagesColor.blue / 255f
+            )
+            if (ImGui.colorEdit3("Averages color", averagesColor)) {
+                config.averagesColor = Color(averagesColor[0], averagesColor[1], averagesColor[2])
+            }
+
+            val positivePredictionColor = floatArrayOf(
+                config.positivePredictionColor.red / 255f,
+                config.positivePredictionColor.green / 255f,
+                config.positivePredictionColor.blue / 255f
+            )
+            if (ImGui.colorEdit3("Positive prediction color", positivePredictionColor)) {
+                config.positivePredictionColor =
+                    Color(positivePredictionColor[0], positivePredictionColor[1], positivePredictionColor[2])
+            }
+
+            val negativePredictionColor = floatArrayOf(
+                config.negativePredictionColor.red / 255f,
+                config.negativePredictionColor.green / 255f,
+                config.negativePredictionColor.blue / 255f
+            )
+            if (ImGui.colorEdit3("Negative prediction color", negativePredictionColor)) {
+                config.negativePredictionColor =
+                    Color(negativePredictionColor[0], negativePredictionColor[1], negativePredictionColor[2])
+            }
+
+            val inflatedItemWarningColor = floatArrayOf(
+                config.inflatedItemWarningColor.red / 255f,
+                config.inflatedItemWarningColor.green / 255f,
+                config.inflatedItemWarningColor.blue / 255f
+            )
+            if (ImGui.colorEdit3("Inflated item warning color", inflatedItemWarningColor)) {
+                config.inflatedItemWarningColor =
+                    Color(inflatedItemWarningColor[0], inflatedItemWarningColor[1], inflatedItemWarningColor[2])
+            }
+
+            ImGui.treePop()
+        }
+    }
+
+    private fun renderSignSettings() {
+        if (ImGui.treeNodeEx("Signs", ImGuiTreeNodeFlags.DefaultOpen)) {
+            if (ImGui.checkbox("Submit signs with enter", shouldSubmitSignsWithEnterFlag)) {
+                config.shouldSubmitSignsWithEnter = shouldSubmitSignsWithEnterFlag.get()
+            }
+            ImGui.treePop()
+        }
+    }
+
+    private fun renderChatSettings() {
+        if (ImGui.treeNodeEx("Addons", ImGuiTreeNodeFlags.DefaultOpen)) {
+            if (ImGui.checkbox("Preview images in chat", shouldPreviewChatImagesFlag)) {
+                config.shouldPreviewChatImages = shouldPreviewChatImagesFlag.get()
+                if (shouldPreviewChatImagesFlag.get()) {
+                    ChatImageUI.initialize()
+                    Imguimc.pushRenderable(ChatImageUI)
+                } else {
+                    Imguimc.pullRenderable(ChatImageUI)
+                }
+            }
+            ImGui.treePop()
+        }
+    }
+
+    private fun renderMiscSettings() {
+        if (ImGui.treeNodeEx("Window", ImGuiTreeNodeFlags.DefaultOpen)) {
+            if (ImGui.inputText("Custom window title", customWindowTitleStr, ImGuiInputTextFlags.None)) {
+                config.customWindowTitle = customWindowTitleStr.get()
+                val title = if (config.customWindowTitle.isEmpty()) "" else config.customWindowTitle
+                WindowTitleChangedEvent.publish(WindowTitleChangedEvent(title))
+            }
+            ImGui.treePop()
         }
 
-        addDependency(clazz.getDeclaredField("damageTintColor"), clazz.getDeclaredField("shouldTintDamage"))
-        addDependency(clazz.getDeclaredField("userTime"), clazz.getDeclaredField("shouldChangeTime"))
-        addDependency(clazz.getDeclaredField("customXpOrbColor"), clazz.getDeclaredField("shouldUsecustomXpOrbs"))
-        addDependency(clazz.getDeclaredField("customXpOrbSize"), clazz.getDeclaredField("shouldUsecustomXpOrbs"))
+        if (ImGui.treeNodeEx("???", ImGuiTreeNodeFlags.DefaultOpen)) {
+            if (ImGui.checkbox("Saab Mode", saabModeFlag)) {
+                config.saabMode = saabModeFlag.get()
+                toggleRenderable(saab, saabModeFlag.get())
+            }
+            ImGui.treePop()
+        }
+    }
 
-        setCategoryDescription(
-            "rendering",
-            "options related to rendering"
-        )
+    private fun renderInternalSettings() {
+        if (ImGui.treeNodeEx("Internal", ImGuiTreeNodeFlags.DefaultOpen)) {
+            if (ImGui.button("Edit prediction weights")) {
+                config.editWeights()
+            }
+            ImGui.treePop()
+        }
+    }
 
-        setSubcategoryDescription(
-            "rendering",
-            "entity",
-            "options related to entity and player rendering"
-        )
+    private fun toggleRenderable(renderable: Renderable, enabled: Boolean) {
+        if (enabled) {
+            Imguimc.pushRenderableAfterRender(renderable)
+        } else {
+            Imguimc.pullRenderableAfterRender(renderable)
+        }
+    }
 
-        setSubcategoryDescription(
-            "rendering",
-            "world",
-            "options related to world client side rendering and properties"
-        )
-
-        setSubcategoryDescription(
-            "gui",
-            "internal",
-            "edit the prediction weights for bazaar ui, they should always add up roughly to 1"
-        )
+    override fun close() {
+        config.save()
+        super.close()
     }
 }

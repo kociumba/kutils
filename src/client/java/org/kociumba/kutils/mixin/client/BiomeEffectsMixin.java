@@ -19,7 +19,7 @@ public class BiomeEffectsMixin {
     @ModifyReturnValue(method = "getWaterColor", at = @At("RETURN"))
     private int getWaterColor(int original) {
         Color c = getC().getWaterColor();
-        int customColor = ColorHelper.Argb.getArgb(c.getAlpha(), c.getBlue(), c.getGreen(), c.getRed());
+        int customColor = ColorHelper.getArgb(c.getAlpha(), c.getBlue(), c.getGreen(), c.getRed());
         if (getC().getShouldColorWater()) return customColor;
         return original;
     }

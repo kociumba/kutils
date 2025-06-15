@@ -3,14 +3,20 @@ package org.kociumba.kutils.client.imgui
 import com.github.weisj.jsvg.SVGDocument
 import com.github.weisj.jsvg.geometry.size.FloatSize
 import com.github.weisj.jsvg.parser.SVGLoader
+import com.mojang.blaze3d.opengl.GlStateManager
+import com.mojang.blaze3d.systems.RenderSystem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.texture.AbstractTexture
+import net.minecraft.client.texture.GlTexture
 import net.minecraft.client.texture.NativeImage
 import net.minecraft.client.texture.NativeImageBackedTexture
+import net.minecraft.client.texture.ReloadableTexture
+import net.minecraft.util.Identifier
+import org.kociumba.kutils.client.modID
 import org.kociumba.kutils.log
 import java.awt.Graphics2D
 import java.awt.RenderingHints
@@ -20,7 +26,9 @@ import java.io.ByteArrayOutputStream
 import java.io.FileInputStream
 import java.io.InputStream
 import java.net.URI
+import java.util.function.Supplier
 import javax.imageio.ImageIO
+import kotlin.reflect.typeOf
 
 enum class LoadingState {
     IDLE,
@@ -37,17 +45,17 @@ class ImImage : AutoCloseable {
     /**
      * the underlying minecraft AbstractTexture
      */
-    var abstractTexture : AbstractTexture? = null
+    var abstractTexture: AbstractTexture? = null
 
     /**
      * the texture id on the GPU, if -1 the texture has not been uploaded
      */
-    var glID : Int = -1
+    var glID: Int = -1
 
     /**
      * the unique prefix generated for this texture. If empty, the texture has not been uploaded
      */
-    var prefix : String = ""
+    var prefix: String = ""
         private set
 
     /**
@@ -79,7 +87,7 @@ class ImImage : AutoCloseable {
     var errorMessage: String = ""
         private set
 
-    private val defPrefix : String = "kutils_"
+    private val defPrefix: String = "kutils_"
     private val client: MinecraftClient = MinecraftClient.getInstance()
     private val scope = CoroutineScope(Dispatchers.IO + Job())
 
@@ -251,13 +259,26 @@ class ImImage : AutoCloseable {
 
             this.width = image.width
             this.height = image.height
+            val pref = this.generateUniquePrefix()
 
-            val texture = NativeImageBackedTexture(image)
-            val txID = client.textureManager.registerDynamicTexture(this.generateUniquePrefix(), texture)
-            client.textureManager.bindTexture(txID)
-            this.abstractTexture = client.textureManager.getTexture(txID)
-                ?: throw IllegalStateException("Failed to get texture from texture manager")
-            this.glID = this.abstractTexture?.glId ?: -1
+            val texture = NativeImageBackedTexture(Supplier { pref }, image)
+            this.abstractTexture = texture
+            val id = Identifier.of(modID, pref)
+            client.textureManager.registerTexture(id, texture)
+            texture.upload();
+
+            val glTex = texture.getGlTexture()
+            if (glTex is GlTexture) {
+                glID = glTex.getGlId()
+            } else {
+                log.error(
+                    "wrong texture type created, expected GLTexture, got ${glTex::class::simpleName}"
+                )
+            }
+
+            RenderSystem.setShaderTexture(
+                0, glTex
+            )
 
             this.loadingState = LoadingState.LOADED
             return this
