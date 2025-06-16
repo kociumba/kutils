@@ -81,7 +81,7 @@ dependencies {
 
     modImplementation("net.fabricmc.fabric-api:fabric-api:${project.property("fabric_version")}")
 
-    modImplementation(include("gg.essential:vigilance:${project.property("vigilance_version")}")!!) // unmaintained, have to use something else
+//    modImplementation(include("gg.essential:vigilance:${project.property("vigilance_version")}")!!) // unmaintained, have to use something else
     implementation(include("gg.essential:elementa:${project.property("elementa_version")}")!!)
     modImplementation(include("gg.essential:universalcraft-1.21.5-fabric:${project.property("universalcraft_version")}")!!)
 

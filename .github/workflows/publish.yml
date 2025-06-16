@@ -4,7 +4,7 @@ on:
   push:
     tags: [ "v*" ] # any version tag
 env:
-  MINECRAFT_VERSION: 1.21.1
+  MINECRAFT_VERSION: 1.21.5
   JAVA_VERSION: 21
   RELEASE_NAME: kutils
   MODRINTH_TOKEN: ${{ secrets.PUBLISH_MODRINTH_TOKEN }}
