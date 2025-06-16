@@ -18,6 +18,7 @@ import org.kociumba.kutils.client.hud.networkingHud
 import org.kociumba.kutils.client.hud.performanceHud
 import org.kociumba.kutils.client.imgui.ImGuiKutilsTheme
 import xyz.breadloaf.imguimc.Imguimc
+import xyz.breadloaf.imguimc.icons.FontAwesomeIcons
 import xyz.breadloaf.imguimc.interfaces.Renderable
 import xyz.breadloaf.imguimc.screen.ImGuiScreen
 import xyz.breadloaf.imguimc.screen.ImGuiWindow
@@ -297,6 +298,12 @@ class KutilsConfig(
             if (ImGui.sliderFloat("Font scale", fontScaleSlider, 0.1f, 2f)) {
                 config.fontScale = fontScaleSlider[0]
                 ImGui.getIO().fontGlobalScale = config.fontScale
+            }
+            ImGui.sameLine()
+            if (ImGui.button(FontAwesomeIcons.Undo)) {
+                fontScaleSlider[0] = 1.0f
+                config.fontScale = 1.0f
+                ImGui.getIO().fontGlobalScale = 1.0f
             }
 
             if (ImGui.checkbox("Show weekly traffic", showWeeklyTrafficFlag)) {

@@ -193,7 +193,7 @@ class Config(@Transient private val configFile: File = File("./config/kutils.jso
 
     // GUI - Theme
     @Serializable(with = ColorStringSerializer::class)
-    var mainWindowBackground: Color = Color(0.05f, 0.05f, 0.05f, 1.0f)
+    var mainWindowBackground: Color = Color(0.04f, 0.04f, 0.04f, 0.94f)
         set(value) {
             field = value; save()
         }
@@ -282,6 +282,11 @@ class Config(@Transient private val configFile: File = File("./config/kutils.jso
 
     // Misc - ???
     var saabMode: Boolean = false
+        set(value) {
+            field = value; save()
+        }
+
+    var shouldShowOldConfigWarning: Boolean = true
         set(value) {
             field = value; save()
         }

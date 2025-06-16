@@ -82,7 +82,7 @@ public abstract class ChatHudMixin {
             }
         }
 
-        KutilsLogger.INSTANCE.warn("Failed to find message at position " + x + ", " + y);
+//        KutilsLogger.INSTANCE.warn("Failed to find message at position " + x + ", " + y);
         return Text.empty();
     }
 

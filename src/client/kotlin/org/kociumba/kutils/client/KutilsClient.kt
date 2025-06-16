@@ -37,6 +37,7 @@ import org.kociumba.kutils.client.mappings.MappingLoader
 import org.kociumba.kutils.client.notes.NoteData
 import org.kociumba.kutils.client.notes.NotesScreen
 import org.kociumba.kutils.client.utils.chatInfo
+import org.kociumba.kutils.client.utils.chatInfoCommand
 import org.kociumba.kutils.client.utils.checkKutilsUpdates
 import org.kociumba.kutils.log
 import org.lwjgl.glfw.GLFW
@@ -196,6 +197,17 @@ class KutilsClient : ClientModInitializer {
             })
         }
 
+        ClientCommandRegistrationCallback.EVENT.register { dispatcher, registryAccess ->
+            dispatcher.register(
+                ClientCommandManager.literal("kutils")
+                    .then(ClientCommandManager.literal("suppress-warning").executes { context ->
+                        c.shouldShowOldConfigWarning = false
+                        c.save()
+                        0
+                    })
+            )
+        }
+
         if (MinecraftClient.getInstance().isFinishedLoading && c.fontScale != 1.0f) {
             ImGui.getIO().fontGlobalScale = c.fontScale
         }
@@ -326,18 +338,21 @@ class KutilsClient : ClientModInitializer {
 
 //        GameJoinEvent.subscribe { checkKutilsUpdates() } // subscribe to any for testing
         GameJoinEvent.subscribeOnce { checkKutilsUpdates() } // subscribe once for prod
-        GameJoinEvent.subscribeOnce { newConfigAlert() }
+        GameJoinEvent.subscribeOnce {
+            if (Path("./config/kutils.toml").exists() and c.shouldShowOldConfigWarning) {
+                chatInfoCommand(
+                    listOf(
+                        "Kutils now uses a new config format.",
+                        "Please redo your settings.",
+                        "Your old config is at config/kutils.toml.",
+                        "",
+                        "Click this message to disable this warning"
+                    ),
+                    "/kutils suppress-warning"
+                )
+            }
+        }
 
         log.info("kutils initial setup done in ${Util.getMeasuringTimeMs() - start}ms")
-    }
-}
-
-fun newConfigAlert() {
-    if (Path("./config/kutils.toml").exists()) {
-        chatInfo(
-            "Kutils now uses a new config format.\n" +
-                    "Please redo your settings.\n" +
-                    "Your old config is at config/kutils.toml."
-        )
     }
 }
